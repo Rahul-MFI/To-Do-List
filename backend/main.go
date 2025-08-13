@@ -1,67 +1,42 @@
 package main
 
 import (
-	"encoding/json"
+	"ToDo/config"
+	"ToDo/routes"
 	"fmt"
-	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
-type Task struct {
-	Name string `json:"name"`
-	Id   int    `json:"id"`
-	Mark bool   `json:"mark"`
-}
-
-func healthHandlerMiddleware1(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("middleware1")
-		next.ServeHTTP(w, r)
-	})
-}
-
-func healthHandlerMiddleware2(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Print("midleare 2")
-		healthHandlerMiddleware1(next).ServeHTTP(w, r)
-	})
-}
-
-// Main handler: dispatch based on method
-func healthHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		healthHandlerGet(w, r)
-	case http.MethodPost:
-		healthHandlerPost(w, r)
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	}
-}
-
-// GET handler
-func healthHandlerGet(w http.ResponseWriter, r *http.Request) {
-	task := Task{
-		Name: "Health Check Task",
-		Id:   1,
-		Mark: false,
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(task)
-}
-
-// POST handler
-func healthHandlerPost(w http.ResponseWriter, r *http.Request) {
-	var task Task
-	task.Name = "Rocky"
-	task.Id = 101
-	task.Mark = true
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(task)
+func routeHandler(c *gin.Context) {
+	c.String(200, "Helo Rocky")
 }
 
 func main() {
-	fmt.Println("Hi Rocky")
-	http.Handle("/health", healthHandlerMiddleware2(http.HandlerFunc(healthHandler)))
-	http.ListenAndServe(":8080", nil)
+	r := gin.Default()
+
+	// Root route
+	r.GET("/", routeHandler)
+
+	// Route groups from routes package
+	api := r.Group("/api")
+
+	routes.AuthRouter(api)
+	routes.WorkspaceRouter(api)
+	routes.TaskRouter(api)
+
+	fmt.Println("Server running on http://localhost:3000")
+	var err error
+	config.ConnectDatabase()
+	if err != nil {
+		fmt.Println(err)
+	}
+	err = config.Db.InitializeTables()
+	if err != nil {
+		fmt.Println(err)
+	}
+	err = r.Run(":3001")
+	if err != nil {
+		fmt.Println(fmt.Errorf("failed to create table: %w", err))
+	}
 }
