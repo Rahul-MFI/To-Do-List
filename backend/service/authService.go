@@ -27,13 +27,20 @@ func SignUp(email, username, password string) (string, int, error) {
 
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 
-	if _, err := config.Db.Conn.Exec("INSERT INTO users (email, username, password) VALUES (?, ?, ?)",
-		email, username, string(hashedPassword),
-	); err != nil {
+	res, err := config.Db.Conn.Exec("INSERT INTO users (email, username, password) VALUES (?, ?, ?)",
+		email, username, string(hashedPassword))
+	if err != nil {
+		return "", http.StatusInternalServerError, err
+	}
+	user_id, err := res.LastInsertId()
+	if err != nil {
 		return "", http.StatusInternalServerError, err
 	}
 
-	token, _ := utils.GenerateJWT(email)
+	token, err := utils.GenerateJWT(int(user_id))
+	if err != nil {
+		return "", http.StatusInternalServerError, errors.New("internal server error")
+	}
 	return token, http.StatusOK, nil
 }
 
@@ -54,6 +61,9 @@ func Login(email, password string) (string, int, error) {
 	}
 
 	// Generate JWT
-	token, _ := utils.GenerateJWT(email)
+	token, err := utils.GenerateJWT(user.U_Id)
+	if err != nil {
+		return "", http.StatusInternalServerError, errors.New("internal server error")
+	}
 	return token, http.StatusOK, nil
 }

@@ -2,6 +2,7 @@ package service
 
 import (
 	"ToDo/config"
+	"ToDo/model"
 	"errors"
 	"net/http"
 
@@ -9,8 +10,24 @@ import (
 )
 
 // Get all workspaces
-func GetWorkspace() {
-
+func GetWorkspace(user_id int) (int, []model.Workspace, error) {
+	res, err := config.Db.Conn.Query("SELECT * from workspace where u_id = ?", user_id)
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+	defer res.Close()
+	var workspaces = []model.Workspace{}
+	for res.Next() {
+		var ws model.Workspace
+		if err := res.Scan(&ws.W_Id, &ws.W_Name, &ws.U_Id); err != nil {
+			return http.StatusInternalServerError, nil, err
+		}
+		workspaces = append(workspaces, ws)
+	}
+	if err = res.Err(); err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+	return http.StatusOK, workspaces, nil
 }
 
 // Create new workspace
@@ -28,7 +45,7 @@ func CreateWorkspace(w_name string, user_id int) (int, error) {
 				return http.StatusInternalServerError, errors.New("unknown server error")
 			}
 		} else {
-			return 500, errors.New("internal Server Error")
+			return http.StatusInternalServerError, errors.New("internal Server Error")
 		}
 	}
 	return http.StatusOK, nil

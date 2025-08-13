@@ -14,7 +14,13 @@ type CreateWorkspaceRequest struct {
 
 // GET /workspace
 func GetWorkspaceController(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "GET /workspace"})
+	user_id := c.GetInt("user_id")
+	status, workspaces, err := service.GetWorkspace(user_id)
+	if err != nil {
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully fetched the data", "data": workspaces})
 }
 
 // POST /workspace

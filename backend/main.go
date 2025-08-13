@@ -3,12 +3,16 @@ package main
 import (
 	"ToDo/config"
 	"ToDo/routes"
+	"ToDo/utils"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
 
 func routeHandler(c *gin.Context) {
+	// Load Env variables
+	env := utils.GetEnv()
+	fmt.Print(env)
 	c.String(200, "Helo Rocky")
 }
 
@@ -28,9 +32,7 @@ func main() {
 	fmt.Println("Server running on http://localhost:3000")
 	var err error
 	config.ConnectDatabase()
-	if err != nil {
-		fmt.Println(err)
-	}
+
 	err = config.Db.InitializeTables()
 	if err != nil {
 		fmt.Println(err)

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"ToDo/utils"
 	"database/sql"
 	"fmt"
 	"log"
@@ -69,11 +70,11 @@ func (db *DB) InitializeTables() error {
 func ConnectDatabase() error {
 	Db = &DB{}
 	cfg := Config{
-		Host:     "localhost",
-		Port:     "3306",
-		Username: "root",
-		Password: "root",
-		Database: "Todo",
+		Host:     utils.GetEnv().DB_HOST,
+		Port:     utils.GetEnv().DB_PORT,
+		Username: utils.GetEnv().DB_USER,
+		Password: utils.GetEnv().DB_PASS,
+		Database: utils.GetEnv().DB_NAME,
 	}
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&charset=utf8mb4",
 		cfg.Username,

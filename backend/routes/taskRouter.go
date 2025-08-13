@@ -2,6 +2,7 @@ package routes
 
 import (
 	"ToDo/controller"
+	"ToDo/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,6 +15,7 @@ import (
 
 func TaskRouter(rg *gin.RouterGroup) {
 	task := rg.Group("/tasks")
+	task.Use(middleware.AuthMiddleware())
 	task.PUT("/:id", controller.UpdateTaskController)
 	task.PATCH("/:id/complete", controller.MarkTaskCompletedController)
 	task.DELETE("/:id", controller.DeleteTaskController)
