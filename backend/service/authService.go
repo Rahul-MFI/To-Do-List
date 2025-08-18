@@ -55,7 +55,6 @@ func Login(email, password string) (string, int, error) {
 		return "", http.StatusInternalServerError, err
 	}
 
-	// Compare password
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
 		return "", http.StatusUnauthorized, errors.New("invalid credentials")
 	}

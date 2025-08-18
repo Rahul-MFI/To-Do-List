@@ -10,26 +10,17 @@ import (
 )
 
 func routeHandler(c *gin.Context) {
-	// Load Env variables
-	env := utils.GetEnv()
-	fmt.Print(env)
 	c.String(200, "Helo Rocky")
 }
 
 func main() {
-	r := gin.Default()
+	utils.LoadEnv(".env.test")
+	_ = utils.GetEnv()
 
-	// Root route
+	r := routes.SetupRouter()
 	r.GET("/", routeHandler)
 
-	// Route groups from routes package
-	api := r.Group("/api")
-
-	routes.AuthRouter(api)
-	routes.WorkspaceRouter(api)
-	routes.TaskRouter(api)
-
-	fmt.Println("Server running on http://localhost:3000")
+	fmt.Println("Server running on http://localhost:3001")
 	var err error
 	config.ConnectDatabase()
 

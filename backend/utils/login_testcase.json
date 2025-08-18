@@ -1,0 +1,110 @@
+[
+  {
+    "name": "Valid User 1",
+    "payload": {
+      "email": "abc@gmail.com",
+      "password": "1234"
+    },
+    "expectedStatus": 200,
+    "expectedMessage": {
+      "token" : "string"
+    }
+  },
+  {
+    "name": "Valid User 2",
+    "payload": {
+      "email": "def@gmail.com",
+      "password": "1234"
+    },
+    "expectedStatus": 200,
+    "expectedMessage": {
+      "token" : "string"
+    }
+  },
+  {
+    "name": "invalid password",
+    "payload": {
+      "email": "abc@gmail.com",
+      "password": "wrongpassword" 
+    },
+    "expectedStatus": 401,
+    "expectedMessage": {
+      "error" : "string"
+    }
+  },
+  {
+    "name": "user not found",
+    "payload" :{"email": "nouser@example.com",
+    "password": "whatever"},
+    "expectedStatus": 404,
+    "expectedMessage": {
+      "error" : "string"
+    }
+  },
+  {
+    "name": "user not found 2",
+    "payload" : {
+      "email": "nouser2@gmail.com",
+      "password": "skjlfjsdlfj"
+    },
+    "expectedStatus": 404,
+    "expectedMessage": {
+      "error" : "string"
+    }
+  },
+  {
+    "name": "missing email",
+    "payload":{
+      "email": "",
+      "password": "password123"
+    },
+    "expectedStatus": 400,
+    "expectedMessage": {
+      "error" : "string"
+    }
+  },
+  {
+    "name": "missing body",
+    "payload" :{
+      "email": "",
+      "password": ""
+    },
+    "expectedStatus": 400,
+    "expectedMessage": {
+      "error" : "string"
+    }
+  },
+  {
+    "name": "missing password",
+    "payload" :{
+      "email": "test@example.com",
+      "password": ""
+    },
+    "expectedStatus": 400,
+    "expectedMessage": {
+      "error" : "string"
+    }
+  },
+  {
+    "name": "Bad email",
+    "payload" :{
+      "email": 1313,
+      "password": "wrongpassword"
+    },
+    "expectedStatus": 400,
+    "expectedMessage": {
+      "error" : "string"
+    }
+  },
+  {
+    "name": "Bad password",
+    "payload" :{
+      "email": "test@example.com",
+      "password": 9980
+    },
+    "expectedStatus": 400,
+    "expectedMessage": {
+      "error" : "string"
+    }
+  }
+]

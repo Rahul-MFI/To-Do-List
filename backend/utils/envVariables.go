@@ -10,11 +10,12 @@ import (
 
 var env *model.Env
 
-func init() {
+// LoadEnv loads env vars from a given file
+func LoadEnv(file string) {
 	env = &model.Env{}
-	err := godotenv.Load()
+	err := godotenv.Load(file)
 	if err != nil {
-		log.Fatalf("Error loading .env file")
+		log.Fatalf("Error loading %s file: %v", file, err)
 	}
 	env.DB_HOST = os.Getenv("DB_HOST")
 	env.DB_PORT = os.Getenv("DB_PORT")
@@ -25,6 +26,10 @@ func init() {
 	env.JWT_EXPIRATION = os.Getenv("JWT_EXPIRATION")
 }
 
+// GetEnv returns the loaded env
 func GetEnv() model.Env {
+	if env == nil {
+		log.Fatal("Environment not loaded. Call LoadEnv first.")
+	}
 	return *env
 }

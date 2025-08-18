@@ -19,6 +19,7 @@ func WorkspaceRouter(rg *gin.RouterGroup) {
 	workspace.Use(middleware.AuthMiddleware())
 	workspace.GET("/", controller.GetWorkspaceController)
 	workspace.POST("/", controller.CreateWorkspaceController)
-	workspace.POST("/:id/task", controller.CreateWorkspaceTaskController)
-	workspace.GET("/:id/task", controller.GetWorkspaceTaskController)
+	workspace.DELETE("/", controller.DeleteWorkspaceController)
+	workspace.POST("/task", controller.CreateWorkspaceTaskController)
+	workspace.GET("/task", controller.GetWorkspaceTaskController)
 }

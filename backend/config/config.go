@@ -40,8 +40,9 @@ func (db *DB) InitializeTables() error {
 
 		`CREATE TABLE IF NOT EXISTS workspace (
 			w_id INT AUTO_INCREMENT PRIMARY KEY,
-			w_name VARCHAR(255) NOT NULL UNIQUE,
+			w_name VARCHAR(255) NOT NULL,
 			u_id INT NOT NULL,
+			UNIQUE KEY w_name_uid (w_name, u_id),
 			FOREIGN KEY (u_id) REFERENCES users(u_id) ON DELETE CASCADE
 		)`,
 
@@ -52,6 +53,7 @@ func (db *DB) InitializeTables() error {
 			markCompleted BOOLEAN DEFAULT FALSE,
 			deadline DATETIME NOT NULL,
 			w_id int NOT NULL,
+			UNIQUE KEY t_name_wid (t_name, w_id),
 			FOREIGN KEY (w_id) REFERENCES workspace(w_id) ON DELETE CASCADE
 		)`,
 	}
