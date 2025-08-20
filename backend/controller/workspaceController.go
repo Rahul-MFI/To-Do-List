@@ -3,6 +3,8 @@ package controller
 import (
 	"ToDo/service"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -55,8 +57,18 @@ func CreateWorkspaceTaskController(c *gin.Context) {
 		return
 	}
 	now := time.Now()
-	if req.T_Name == "" || (req.Priority < 1 || req.Priority > 3) || req.Deadline.UTC().Before(now.UTC()) {
+	if req.T_Name == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad Request"})
+		return
+	}
+
+	if req.Priority < 1 || req.Priority > 3 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Priority must be between 1 and 3"})
+		return
+	}
+
+	if req.Deadline.UTC().Before(now.UTC()) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Deadline must be after current time"})
 		return
 	}
 
@@ -80,7 +92,65 @@ func GetWorkspaceTaskController(c *gin.Context) {
 
 	u_id := c.GetInt("user_id")
 
-	status, tasks, err := service.GetWorkspaceTask(w_name, u_id)
+	completed := c.Query("completed")
+	if completed != "" {
+		lc := strings.ToLower(completed)
+		if lc != "true" && lc != "false" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid completed parameter, must be true or false"})
+			return
+		}
+	}
+	completed = strings.ToLower(completed)
+
+	priorityStr := c.Query("priority")
+	if priorityStr != "" {
+		val, err := strconv.Atoi(priorityStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid priority parameter, must be a number"})
+			return
+		}
+		if val < 1 || val > 3 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid priority parameter, must be between 1 and 3"})
+			return
+		}
+	}
+
+	sort := c.DefaultQuery("sort", "created_at")
+	if strings.ToLower(sort) != "priority" && strings.ToLower(sort) != "deadline" && sort != "created_at" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid sort parameter"})
+		return
+	}
+	sort = strings.ToLower(sort)
+
+	order := c.DefaultQuery("order", "ASC")
+	if strings.ToUpper(order) != "DESC" && strings.ToUpper(order) != "ASC" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid order parameter"})
+		return
+	}
+	order = strings.ToUpper(order)
+
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page parameter"})
+		return
+	}
+
+	limit, err := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid limit parameter"})
+		return
+	}
+
+	dueBefore := c.Query("due_before")
+	if dueBefore != "" {
+		_, err := time.Parse(time.RFC3339, dueBefore)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid due_before format, must be RFC3339"})
+			return
+		}
+	}
+
+	status, tasks, err := service.GetWorkspaceTask(w_name, u_id, completed, priorityStr, sort, page, limit, dueBefore, order)
 	if err != nil {
 		c.JSON(status, gin.H{"error": err.Error()})
 		return

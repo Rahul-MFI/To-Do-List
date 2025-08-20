@@ -53,6 +53,7 @@ func (db *DB) InitializeTables() error {
 			markCompleted BOOLEAN DEFAULT FALSE,
 			deadline DATETIME NOT NULL,
 			w_id int NOT NULL,
+			created_at DATETIME NOT NULL,
 			UNIQUE KEY t_name_wid (t_name, w_id),
 			FOREIGN KEY (w_id) REFERENCES workspace(w_id) ON DELETE CASCADE
 		)`,

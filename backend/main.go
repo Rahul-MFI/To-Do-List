@@ -14,7 +14,7 @@ func routeHandler(c *gin.Context) {
 }
 
 func main() {
-	utils.LoadEnv(".env.test")
+	utils.LoadEnv(".env")
 	_ = utils.GetEnv()
 
 	r := routes.SetupRouter()

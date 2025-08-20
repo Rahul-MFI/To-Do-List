@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -17,6 +19,7 @@ type TaskResponse struct {
 	MarkCompleted bool      `json:"markCompleted"`
 	Priority      int       `json:"priority"`
 	Deadline      time.Time `json:"deadline"`
+	Created_At    time.Time `json:"created_at"`
 }
 
 // Get all workspaces
@@ -62,8 +65,9 @@ func CreateWorkspace(w_name string, user_id int) (int, error) {
 }
 
 // Get all task in workspace
-func GetWorkspaceTask(w_name string, u_id int) (int, []TaskResponse, error) {
+func GetWorkspaceTask(w_name string, u_id int, completedStr string, priorityStr string, sort string, page int, limit int, dueBeforeStr string, order string) (int, []TaskResponse, error) {
 	// Step 1: Check if workspace exists and get w_id
+
 	var wID int
 	err := config.Db.Conn.QueryRow(
 		"SELECT w_id FROM workspace WHERE w_name = ? AND u_id = ?",
@@ -77,10 +81,36 @@ func GetWorkspaceTask(w_name string, u_id int) (int, []TaskResponse, error) {
 		return http.StatusInternalServerError, nil, err
 	}
 
-	// Step 2: Get tasks for this workspace
+	var completed *bool
+	var priority *int
+	var dueBefore *time.Time
+
+	if completedStr != "" {
+		val := strings.ToLower(completedStr) == "true"
+		completed = &val
+	}
+
+	if priorityStr != "" {
+		val, err := strconv.Atoi(priorityStr)
+		if err == nil {
+			priority = &val
+		}
+	}
+
+	if dueBeforeStr != "" {
+		t, err := time.Parse(time.RFC3339, dueBeforeStr)
+		if err == nil {
+			dueBefore = &t
+		}
+	}
+
+	query := `SELECT t_name, priority, markCompleted, deadline, created_at FROM task WHERE w_id = ? AND (markCompleted = ? OR ? is NULL) AND (priority = ? OR ? is NULL) AND (deadline < ? OR ? is NULL)`
+
+	query += fmt.Sprintf(` ORDER BY %s %s LIMIT ? OFFSET ?`, sort, order)
+
 	res, err := config.Db.Conn.Query(
-		"SELECT t_name, priority, markCompleted, deadline FROM task WHERE w_id = ?",
-		wID,
+		query,
+		wID, completed, completed, priority, priority, dueBefore, dueBefore, limit, (page-1)*limit,
 	)
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
@@ -90,7 +120,7 @@ func GetWorkspaceTask(w_name string, u_id int) (int, []TaskResponse, error) {
 	var tasks []TaskResponse
 	for res.Next() {
 		var ts TaskResponse
-		if err := res.Scan(&ts.T_Name, &ts.Priority, &ts.MarkCompleted, &ts.Deadline); err != nil {
+		if err := res.Scan(&ts.T_Name, &ts.Priority, &ts.MarkCompleted, &ts.Deadline, &ts.Created_At); err != nil {
 			return http.StatusInternalServerError, nil, err
 		}
 		tasks = append(tasks, ts)
@@ -106,7 +136,8 @@ func GetWorkspaceTask(w_name string, u_id int) (int, []TaskResponse, error) {
 // Create new task in workspace
 func CreateWorkspaceTask(t_name string, priority int, deadline time.Time, w_name string, u_id int) (int, error) {
 
-	if _, err := config.Db.Conn.Exec("INSERT INTO task (t_name, priority, deadline, w_id) VALUES (?,?,?, (SELECT w_id FROM workspace WHERE w_name = ? AND u_id = ?));", t_name, priority, deadline, w_name, u_id); err != nil {
+	now := time.Now().UTC()
+	if _, err := config.Db.Conn.Exec("INSERT INTO task (t_name, priority, deadline, created_at, w_id) VALUES (?,?,?,?, (SELECT w_id FROM workspace WHERE w_name = ? AND u_id = ?));", t_name, priority, deadline, now, w_name, u_id); err != nil {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 			fmt.Print(mysqlErr.Message)
 			switch mysqlErr.Number {

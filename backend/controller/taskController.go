@@ -19,7 +19,7 @@ type UpdateTaskRequest struct {
 type MarkCompletedRequest struct {
 	T_Name        string `json:"t_name"           binding:"required"`
 	W_Name        string `json:"w_name"           binding:"required"`
-	MarkCompleted bool   `json:"markCompleted"    binding:"required"`
+	MarkCompleted *bool  `json:"markCompleted"    binding:"required"`
 }
 
 type DeleteTaskRequest struct {
@@ -67,11 +67,12 @@ func MarkTaskCompletedController(c *gin.Context) {
 
 	var req MarkCompletedRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad Request"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
 	u_id := c.GetInt("user_id")
-	status, err := service.MarkTaskCompleted(req.T_Name, req.W_Name, req.MarkCompleted, u_id)
+	status, err := service.MarkTaskCompleted(req.T_Name, req.W_Name, *req.MarkCompleted, u_id)
 	if err != nil {
 		c.JSON(status, gin.H{"error": err.Error()})
 		return
