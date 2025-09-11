@@ -241,7 +241,7 @@ const Dashboard = () => {
                   </h1>
                   <button
                     onClick={toggleSidebar}
-                    className="absolute right-4 p-2 rounded-lg hover:bg-gray-50 md:hidden"
+                    className="absolute right-4 p-2 rounded-lg hover:bg-red-200 hover:text-red-500 md:hidden"
                   >
                     <X size={20} />
                   </button>
@@ -376,7 +376,7 @@ const Dashboard = () => {
                 }}
                 className="text-gray-400 hover:text-gray-600"
               >
-                <X className="w-6 h-6" />
+                <X className="w-8 h-8 text-red-500 hover:bg-red-200 hover:text-red-500 p-1 rounded-lg" />
               </button>
             </div>
             <div className="p-6">
@@ -437,7 +437,7 @@ const Dashboard = () => {
                 }}
                 className=" text-gray-400 hover:text-gray-600"
               >
-                <X className="w-6 h-6" />
+                <X className="w-8 h-8 text-red-500 hover:bg-red-200 hover:text-red-500 p-1 rounded-lg" />
               </button>
             </div>
             <div className="flex flex-col gap-3 px-4 py-3">

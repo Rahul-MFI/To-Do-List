@@ -8,7 +8,7 @@ export default function SuccessBar({
 }) {
   return (
     <div
-      className={`absolute w-2/3 md:w-1/3 xl:w-1/4 top-4 left-1/2 -translate-x-1/2 z-100 p-4 duration-300 ease-in-out ${
+      className={`absolute w-5/6 sm:w-3/4 md:w-1/3 xl:w-1/4 top-4 left-1/2 -translate-x-1/2 z-100 p-4 duration-300 ease-in-out ${
         isAnimating ? "translate-y-0" : "-translate-y-full"
       }`}
     >

@@ -12,6 +12,7 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  XCircle,
 } from "lucide-react";
 import Spinner from "../../components/Spinner";
 import axiosInstance from "../../middleware/axiosInstance";
@@ -61,6 +62,7 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
     dueBefore: "",
     sort: "created_at",
     order: "desc",
+    crossedDeadline: "false"
   });
 
   // Pagination
@@ -89,6 +91,50 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
 
   const { setOnline } = useNetwork();
 
+  const getLocalDate = (dateStr) => {
+    const date = new Date(dateStr);
+    const formatted = date.toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+    return formatted.toUpperCase();
+  };
+
+  const toDateTimeLocalIST = (dateString) => {
+    const date = new Date(dateString);
+
+    const zoned = new Date(
+      date.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
+    );
+
+    const year = zoned.getFullYear();
+    const month = String(zoned.getMonth() + 1).padStart(2, "0");
+    const day = String(zoned.getDate()).padStart(2, "0");
+    const hours = String(zoned.getHours()).padStart(2, "0");
+    const minutes = String(zoned.getMinutes()).padStart(2, "0");
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  const toDateTimeLocalISTNow = () => {
+    const now = new Date();
+    const istDate = new Date(
+      now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
+    );
+
+    const year = istDate.getFullYear();
+    const month = String(istDate.getMonth() + 1).padStart(2, "0");
+    const day = String(istDate.getDate()).padStart(2, "0");
+    const hours = String(istDate.getHours()).padStart(2, "0");
+    const minutes = String(istDate.getMinutes()).padStart(2, "0");
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   const fetchTasks = async () => {
     if (workspaceName === "" || workspaceName == undefined) return;
     setIsLoading(true);
@@ -105,6 +151,10 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
 
       if (filters.priority && filters.priority !== "") {
         cleanFilters.priority = priorityMap[filters.priority];
+      }
+
+      if (filters.crossedDeadline && filters.crossedDeadline !== "false"){
+        cleanFilters.dueBefore = new Date().toISOString()
       }
 
       cleanFilters.sort = filters.sort;
@@ -305,7 +355,7 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
       const response = await axiosInstance.patch(`tasks/`, {
         t_name: taskName,
         w_name: workspaceName,
-        markCompleted: value
+        markCompleted: value,
       });
       if (response.status === 200) {
         await fetchTasks();
@@ -372,7 +422,7 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
 
   const openEditModal = (task) => {
     setTaskName(task.t_name);
-    setDeadline(new Date(task.deadline).toISOString().slice(0, 16));
+    setDeadline(toDateTimeLocalIST(task.deadline));
     setPriority(priorityMapNumber[task.priority]);
     setShowEditModal(true);
   };
@@ -410,14 +460,14 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
   // Priority color classes
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case "high":
-        return "text-red-600 bg-red-50";
-      case "medium":
-        return "text-yellow-600 bg-yellow-50";
-      case "low":
-        return "text-green-600 bg-green-50";
+      case 3:
+        return "text-red-600 bg-red-200";
+      case 2:
+        return "text-yellow-600 bg-yellow-200";
+      case 1:
+        return "text-green-600 bg-green-200";
       default:
-        return "text-gray-600 bg-gray-50";
+        return "text-gray-600 bg-gray-200";
     }
   };
 
@@ -425,7 +475,7 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
     <div className="min-h-screen bg-yellow-50 p-6">
       <div className="max-w-6xl mx-auto">
         <div className="bg-white rounded-lg shadow-sm px-6 py-4 mb-6">
-          <div className="flex flex-row justify-between">
+          <div className="flex flex-wrap gap-3 justify-between">
             <div className="flex flex-wrap gap-4 items-center">
               <button
                 onClick={() => setShowFilters(!showFilters)}
@@ -458,7 +508,6 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
                 onClick={() => setShowAddModal(true)}
                 className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
               >
-                <Plus className="w-5 h-5" />
                 Add Task
               </button>
               <button
@@ -511,21 +560,7 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">
-                    Before Date
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={filters.dueBefore}
-                    onChange={(e) =>
-                      setFilters({ ...filters, dueBefore: e.target.value })
-                    }
-                    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">
-                    Sort by:
+                    Sort by
                   </label>
                   <select
                     value={filters.sort}
@@ -543,7 +578,7 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
                 {/* Sort Order Toggle */}
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">
-                    Order by:
+                    Order by
                   </label>
                   <button
                     onClick={() => {
@@ -560,6 +595,40 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
                       {getSortOrderLabel()}
                     </span>
                   </button>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">
+                    Before Date
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={filters.dueBefore}
+                    onChange={(e) =>
+                      setFilters({ ...filters, dueBefore: e.target.value, crossedDeadline: "false" })
+                    }
+                    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">
+                    Deadline
+                  </label>
+                  <select
+                    value={filters.crossedDeadline}
+                    onChange={(e) =>
+                      setFilters({
+                        ...filters,
+                        crossedDeadline: e.target.value,
+                        dueBefore: (e.target.value === "true") ? toDateTimeLocalISTNow() : ""
+                      })
+                    }
+                    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="false">No</option>
+                    <option value="true">Yes</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -582,14 +651,19 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
               {tasks.map((task) => (
                 <div
                   key={task.t_name}
-                  onClick={() => toggleTaskCompletion(task.t_name, task.markCompleted ? false : true)}
                   className={`border-b border-gray-100 p-4 xl:p-6 hover:bg-gray-50 transition-colors ${
                     task.markCompleted ? "opacity-60" : ""
                   }`}
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 justify-between">
                     <div className="flex items-center gap-4 flex-1">
                       <button
+                        onClick={() =>
+                          toggleTaskCompletion(
+                            task.t_name,
+                            task.markCompleted ? false : true
+                          )
+                        }
                         className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${
                           task.markCompleted
                             ? "bg-green-500 border-green-500 text-white"
@@ -600,7 +674,7 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
                       </button>
 
                       {/* Task details */}
-                      <div className="flex-1">
+                      <div className="flex-1 ">
                         <h3
                           className={`font-medium ${
                             task.markCompleted
@@ -610,23 +684,28 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
                         >
                           {task.t_name}
                         </h3>
-                        <div className="flex items-center gap-4 mt-2">
+                        <div className="flex flex-wrap items-center gap-4 mt-2">
                           <div className="flex items-center gap-1 text-sm text-gray-500">
                             <Calendar className="w-4 h-4" />
-                            {task.deadline}
+                            {getLocalDate(task.deadline)}
                           </div>
                           <span
-                            className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(
+                            className={`px-2 py-1 rounded text-sm font-medium ${getPriorityColor(
                               task.priority
                             )}`}
                           >
-                            <Flag className="w-3 h-3 inline mr-1" />
-                            {task.priority}
+                            <Flag className="w-4 h-4 inline mr-1" />
+                            {priorityMapNumber[task.priority][0].toUpperCase() +
+                              priorityMapNumber[task.priority].slice(1)}
                           </span>
-                          <div className="flex items-center gap-1 text-sm text-gray-400">
-                            <Clock className="w-4 h-4" />
-                            {/* task.created_at.toLocaleDateString()*/}
-                          </div>
+                          {new Date(task.deadline) <= Date.now() && (
+                            <span
+                              className={`flex items-center gap-1 px-2 py-1 rounded text-sm text-white font-medium bg-red-500`}
+                            >
+                              <XCircle className="w-4 h-4" />
+                              Deadline
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -730,7 +809,7 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
                   }}
                   className="text-gray-400 hover:text-gray-600"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-8 h-8 text-red-500 hover:bg-red-200 hover:text-red-500 p-1 rounded-lg" />
                 </button>
               </div>
               <div className="p-6">
@@ -820,7 +899,7 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
                   }}
                   className="text-gray-400 hover:text-gray-600"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-8 h-8 text-red-500 hover:bg-red-200 hover:text-red-500 p-1 rounded-lg" />
                 </button>
               </div>
               <div className="p-6">

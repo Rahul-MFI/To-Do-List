@@ -99,7 +99,7 @@ func GetWorkspaceTask(w_name string, u_id int, completedStr string, priorityStr 
 		}
 	}
 
-	query := `SELECT t_name, priority, markCompleted, deadline, created_at FROM task WHERE w_id = ? AND (markCompleted = ? OR ? is NULL) AND (priority = ? OR ? is NULL) AND (deadline < ? OR ? is NULL)`
+	query := `SELECT t_name, priority, markCompleted, deadline, created_at FROM task WHERE w_id = ? AND (markCompleted = ? OR ? is NULL) AND (priority = ? OR ? is NULL) AND (deadline <= ? OR ? is NULL)`
 
 	query += fmt.Sprintf(` ORDER BY %s %s`, sort, order)
 
