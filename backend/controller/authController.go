@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"ToDo/middleware"
 	"ToDo/service"
+	"ToDo/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -50,4 +52,20 @@ func SignupController(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"token": token})
+}
+
+func VerifyController(c *gin.Context) {
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header missing"})
+		return
+	}
+
+	_, err := middleware.VerifyToken(authHeader, utils.GetEnv().JWT_SECRET)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully verified token"})
 }

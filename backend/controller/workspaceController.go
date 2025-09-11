@@ -42,11 +42,12 @@ func CreateWorkspaceController(c *gin.Context) {
 
 	u_id := c.GetInt("user_id")
 
-	if status, err := service.CreateWorkspace(req.W_Name, u_id); err != nil {
+	wid, status, err := service.CreateWorkspace(req.W_Name, u_id)
+	if err != nil {
 		c.JSON(status, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(200, gin.H{"message": "Successfully created a workspace"})
+	c.JSON(200, gin.H{"message": "Successfully created a workspace", "wid": wid})
 }
 
 // POST /workspace/task
@@ -116,7 +117,7 @@ func GetWorkspaceTaskController(c *gin.Context) {
 	}
 
 	sort := c.DefaultQuery("sort", "created_at")
-	if strings.ToLower(sort) != "priority" && strings.ToLower(sort) != "deadline" && sort != "created_at" {
+	if strings.ToLower(sort) != "priority" && strings.ToLower(sort) != "deadline" && strings.ToLower(sort) != "markcompleted" && sort != "created_at" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid sort parameter"})
 		return
 	}
@@ -141,33 +142,38 @@ func GetWorkspaceTaskController(c *gin.Context) {
 		return
 	}
 
-	dueBefore := c.Query("due_before")
+	dueBefore := c.Query("dueBefore")
 	if dueBefore != "" {
 		_, err := time.Parse(time.RFC3339, dueBefore)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid due_before format, must be RFC3339"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid dueBefore format, must be RFC3339"})
 			return
 		}
 	}
 
-	status, tasks, err := service.GetWorkspaceTask(w_name, u_id, completed, priorityStr, sort, page, limit, dueBefore, order)
+	status, tasks, total_count, err := service.GetWorkspaceTask(w_name, u_id, completed, priorityStr, sort, page, limit, dueBefore, order)
 	if err != nil {
 		c.JSON(status, gin.H{"error": err.Error()})
 		return
 	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Successfully get task in workspace", "tasks": tasks})
+	if tasks == nil {
+		c.JSON(http.StatusOK, gin.H{"message": "Successfully get task in workspace", "tasks": []string{}, "total_count": total_count})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully get task in workspace", "tasks": tasks, "total_count": total_count})
 }
 
 // DELETE /workspace?w_name=""
 func DeleteWorkspaceController(c *gin.Context) {
-	w_name := c.Query("w_name")
-	if w_name == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad Request"})
+	widString := c.Query("wid")
+	wid, err := strconv.Atoi(widString)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid workspace parameter"})
 		return
 	}
+
 	u_id := c.GetInt("user_id")
-	status, err := service.DeleteWorkspace(w_name, u_id)
+	status, err := service.DeleteWorkspace(wid, u_id)
 	if err != nil {
 		c.JSON(status, gin.H{"error": err.Error()})
 		return

@@ -10,4 +10,5 @@ func AuthRouter(rg *gin.RouterGroup) {
 	auth := rg.Group("/auth")
 	auth.POST("/login", controller.LoginController)
 	auth.POST("/signup", controller.SignupController)
+	auth.GET("/verify", controller.VerifyController)
 }

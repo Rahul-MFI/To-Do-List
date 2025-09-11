@@ -1,0 +1,559 @@
+import { useEffect, useState } from "react";
+import {
+  ClipboardList,
+  Menu,
+  Trash2,
+  User2Icon,
+  WifiOff,
+  X,
+} from "lucide-react";
+import Spinner from "../../components/Spinner";
+import TodoApp from "./TodoApp";
+import axiosInstance from "../../middleware/axiosInstance";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import WelcomePage from "./WelcomePage";
+import { useNetwork } from "../../components/useNetwork";
+
+const Dashboard = () => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [menuItems, setMenuItems] = useState([]);
+  const [currentWorkspace, setCurrentWorkspace] = useState(menuItems[0] || {});
+  const [loading, setLoading] = useState(true);
+  const [loading2, setLoading2] = useState(false);
+  const VITE_LOCALHOST = import.meta.env.VITE_LOCALHOST;
+  const [searchParams] = useSearchParams();
+  const wid = searchParams.get("wid");
+  const [workspaceError, setWorkspaceError] = useState("");
+
+  const [showWorkspaceModel, setShowWorkspaceModel] = useState(false);
+  const [showWorkspaceDeleteModal, setShowWorkspaceDeleteModal] =
+    useState(false);
+  const [workspaceName, setWorkspaceName] = useState("");
+
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const { online, setOnline, session, setSession } = useNetwork();
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const navigate = useNavigate();
+
+  const handleNavigation = (item) => {
+    setCurrentWorkspace(item);
+    localStorage.setItem("wid", item.w_id);
+    setCurrentPage(1);
+    navigate(`/dashboard?wid=${item.w_id}`, { replace: true });
+    if (window.innerWidth < 768) {
+      toggleSidebar();
+    }
+  };
+
+  const fetchMenuItems = async () => {
+    try {
+      setLoading(true);
+      const response = await axiosInstance.get("workspace/");
+      const workspaces = response.data?.data || [];
+      setMenuItems(workspaces);
+    } catch (err) {
+      if (err.code === "ERR_NETWORK") {
+        setOnline(false);
+        return;
+      } else if (err.status === 401) {
+        setSession(false);
+        return;
+      }
+      console.error("Error fetching menu items:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMenuItems();
+  }, []);
+
+  useEffect(() => {
+    const fetchcurrentWorkspaceId = () => {
+      try {
+        if (menuItems.length === 0) {
+          return;
+        }
+        const storedWid = localStorage.getItem("wid");
+        let targetWid = wid || storedWid;
+        if (targetWid && menuItems.length > 0) {
+          const selectedWorkspace = menuItems.find(
+            (item) => String(item.w_id) === String(targetWid)
+          );
+          if (selectedWorkspace) {
+            setCurrentWorkspace(selectedWorkspace);
+            navigate(`/dashboard?wid=${selectedWorkspace.w_id}`, {
+              replace: true,
+            });
+          } else {
+            navigate(`/dashboard?wid=${menuItems[0].w_id}`, { replace: true });
+          }
+        } else if (menuItems.length > 0) {
+          navigate(`/dashboard?wid=${menuItems[0].w_id}`, { replace: true });
+        } else {
+          navigate(`/dashboard`, { replace: true });
+        }
+      } catch (err) {
+        console.error("Error setting current page:", err);
+      }
+    };
+
+    fetchcurrentWorkspaceId();
+  }, [menuItems, searchParams, navigate, wid]);
+
+  async function addWorkspace() {
+    if (!workspaceName.trim()) {
+      setWorkspaceError("Workspace name should not empty.");
+      return;
+    }
+    if (workspaceName.length > 20) {
+      setWorkspaceError("Workspace name should not exceed 20 characters.");
+      return;
+    }
+    try {
+      setLoading2(true);
+      const response = await axiosInstance.post("workspace/", {
+        w_name: workspaceName,
+      });
+      if (response.status === 200) {
+        const new_wid = response.data.wid;
+        localStorage.setItem("wid", new_wid);
+        const newWorkspace = { w_id: new_wid, w_name: workspaceName };
+        setShowWorkspaceModel(false);
+        setWorkspaceName("");
+        setWorkspaceError("");
+        handleNavigation(newWorkspace);
+        fetchMenuItems();
+      } else {
+        setWorkspaceError("Failed to create workspace. Please try again.");
+      }
+    } catch (err) {
+      if (err.code === "ERR_NETWORK") {
+        setOnline(false);
+        setWorkspaceError("");
+        setWorkspaceName("");
+        setShowWorkspaceModel(false);
+        return;
+      } else if (err.status === 401) {
+        setShowWorkspaceModel(false);
+        setSession(false);
+        return;
+      } else if (err.response && err.response.data && err.response.data.error) {
+        setWorkspaceError(err.response.data.error);
+      } else {
+        setWorkspaceError("An unexpected error occurred. Please try again.");
+      }
+      console.error("Error creating workspace:", err);
+    } finally {
+      setLoading2(false);
+    }
+  }
+
+  async function deleteWorkspace() {
+    if (!currentWorkspace.w_id) {
+      return;
+    }
+    try {
+      setLoading2(true);
+      const response = await axiosInstance.delete(
+        `workspace/?wid=${currentWorkspace.w_id}`
+      );
+      if (response.status === 200) {
+        setShowWorkspaceDeleteModal(false);
+        localStorage.removeItem("wid");
+        const updatedMenu = menuItems.filter(
+          (item) => item.w_id !== currentWorkspace.w_id
+        );
+        setMenuItems(updatedMenu);
+
+        if (updatedMenu.length > 0) {
+          const nextWorkspace = updatedMenu[0];
+          setCurrentWorkspace(nextWorkspace);
+          localStorage.setItem("wid", nextWorkspace.w_id);
+          navigate(`/dashboard?wid=${nextWorkspace.w_id}`, { replace: true });
+          setCurrentPage(1);
+        } else {
+          setCurrentWorkspace({});
+          localStorage.removeItem("wid");
+          navigate(`/dashboard`, { replace: true });
+        }
+      } else {
+        setWorkspaceError("Failed to delete workspace. Please try again.");
+      }
+    } catch (err) {
+      if (err.code === "ERR_NETWORK") {
+        setOnline(false);
+        setWorkspaceError("");
+        setShowWorkspaceDeleteModal(false);
+        return;
+      } else if (err.status === 401) {
+        setSession(false);
+        setShowWorkspaceDeleteModal(false);
+        return;
+      } else if (err.response && err.response.data && err.response.data.error) {
+        setWorkspaceError(err.response.data.error);
+      } else {
+        setWorkspaceError("An unexpected error occurred. Please try again.");
+      }
+    } finally {
+      setLoading2(false);
+    }
+  }
+
+  function handleCreateWorkspace(value) {
+    setShowWorkspaceModel(value);
+  }
+
+  return (
+    <div className="">
+      {loading ? (
+        <div className="h-dvh flex flex-col justify-center items-center">
+          <Spinner />
+        </div>
+      ) : (
+        <div className="flex h-screen bg-gray-50">
+          <>
+            {isSidebarOpen && (
+              <div
+                className="fixed inset-0 bg-opacity-50 z-40 sm:hidden"
+                onClick={toggleSidebar}
+              />
+            )}
+
+            <div
+              className={`
+                  fixed top-0 left-0 flex flex-col h-screen min-w-64 bg-yellow-100 shadow-lg transform transition-transform duration-300 ease-in-out z-100
+                  ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+                  md:translate-x-0 md:static md:shadow-none
+                `}
+            >
+              <div className="flex flex-col my-auto justify-start py-4 h-5/6">
+                <div className="flex items-center w-full justify-center relative">
+                  <h1
+                    className={`text-xl xl:text-3xl items-center sm:text-2xl font-bold text-yellow-600 bg-gradient-to-r from-yellow-500 to-amber-500 bg-clip-text`}
+                  >
+                    <span>TaskSphere</span>
+                  </h1>
+                  <button
+                    onClick={toggleSidebar}
+                    className="absolute right-4 p-2 rounded-lg hover:bg-gray-50 md:hidden"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <nav className="h-5/6 xl:h-4/5 flex flex-col py-3">
+                  {/* Scrollable content */}
+                  <div className="px-4 mb-4">
+                    <button
+                      onClick={() => {
+                        handleCreateWorkspace(true);
+                      }}
+                      className="w-full flex items-center justify-center space-x-2 px-4 py-3 xl:py-3 xl:px-4 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors duration-200 font-medium xl:text-lg"
+                    >
+                      <span>+ Create Workspace</span>
+                    </button>
+                  </div>
+                  <div className="border-b border-yellow-300 mx-4 mb-2"></div>
+                  <div className="flex-1 overflow-y-auto">
+                    <ul className="space-y-2 px-4">
+                      {menuItems.length === 0 && (
+                        <div className="w-full h-full flex justify-center items-center">
+                          <ClipboardList
+                            size={64}
+                            className="text-yellow-300 opacity-60 animate-pulse"
+                          />
+                          <li className="text-yellow-700 text-center">
+                            No Workspaces Available
+                          </li>
+                        </div>
+                      )}
+                      {menuItems.map((item) => {
+                        const isActive = currentWorkspace.w_id === item.w_id;
+                        return (
+                          <li className="divide-y " key={item.w_id}>
+                            <div
+                              className={`flex flex-row justify-between items-center px-4 rounded-lg ${
+                                isActive
+                                  ? "bg-yellow-200 text-yellow-700"
+                                  : "text-yellow-700 hover:bg-yellow-200"
+                              }`}
+                            >
+                              <button
+                                onClick={() => handleNavigation(item)}
+                                className={`
+                                  w-full flex items-center space-x-3 py-3 xl:py-3
+                                  rounded-lg text-left transition-colors duration-200 xl:text-lg
+                                `}
+                              >
+                                {item.w_name.length <= 15
+                                  ? item.w_name
+                                  : item.w_name.slice(0, 15) + "..."}
+                              </button>
+                              {isActive && (
+                                <button
+                                  onClick={() =>
+                                    setShowWorkspaceDeleteModal(true)
+                                  }
+                                  className="p-2 hover:text-red-600 hover:bg-red-300 rounded transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4 text-red-700" />
+                                </button>
+                              )}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                </nav>
+              </div>
+              <div className="px-4 mb-4 xl:mb-8">
+                <button
+                  onClick={() => {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("wid");
+                    navigate("/login", { replace: true });
+                  }}
+                  className="w-full flex items-center justify-center space-x-2 px-4 py-3 xl:py-3 xl:px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 font-semibold"
+                >
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            </div>
+          </>
+
+          <div className="flex-1 flex flex-col md:ml-0">
+            {menuItems.length > 0 && (
+              <header className="bg-yellow-500 shadow-sm px-4 py-3 md:px-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <button
+                      onClick={toggleSidebar}
+                      className="p-2 rounded-lg md:hidden"
+                    >
+                      <Menu size={24} className="text-white font-bold" />
+                    </button>
+                    <h1 className="text-lg font-bold text-white">
+                      {currentWorkspace.w_name}
+                    </h1>
+                  </div>
+                </div>
+              </header>
+            )}
+            <main className="flex-1 overflow-y-auto">
+              {menuItems.length > 0 ? (
+                <TodoApp
+                  workspaceName={currentWorkspace.w_name}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                />
+              ) : (
+                <WelcomePage onAction={handleCreateWorkspace} />
+              )}
+            </main>
+          </div>
+        </div>
+      )}
+      {showWorkspaceModel && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center p-4 z-100"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.2)" }}
+        >
+          <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-lg shadow-lg max-w-md w-full">
+            <div className="flex items-center justify-between px-6 pt-6">
+              <h2 className="text-xl font-semibold">Create New Workspace</h2>
+              <button
+                onClick={() => {
+                  setShowWorkspaceModel(false);
+                  setWorkspaceName("");
+                  setWorkspaceError("");
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Workspace Name
+                  </label>
+                  <input
+                    type="text"
+                    value={workspaceName}
+                    onChange={(e) => setWorkspaceName(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter workspace name..."
+                  />
+                </div>
+              </div>
+              <div>
+                {workspaceError && (
+                  <p className="text-red-500 text-sm mt-2">{workspaceError}</p>
+                )}
+              </div>
+              <div className="flex gap-3 mt-6">
+                <button
+                  disabled={loading2}
+                  onClick={addWorkspace}
+                  className="flex-1 bg-black hover:bg-gray-700 text-white px-4 py-2 xl:text-lg font-semibold rounded-md transition-colors"
+                >
+                  {loading2 ? <Spinner style="inline w-4 h-4" /> : "Create"}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowWorkspaceModel(false);
+                    setWorkspaceError("");
+                    setWorkspaceName("");
+                  }}
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 xl:text-lg rounded-md font-semibold transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showWorkspaceDeleteModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center p-4 z-100"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.2)" }}
+        >
+          <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-lg shadow-lg max-w-md w-full">
+            <div className="flex items-center justify-end px-3 pt-3">
+              <button
+                onClick={() => {
+                  setShowWorkspaceDeleteModal(false);
+                  setWorkspaceError("");
+                }}
+                className=" text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="flex flex-col gap-3 px-4 py-3">
+              <h2 className="text-xl font-semibold break-words">
+                Are you sure you want to delete the workspace{" "}
+                <span className="text-red-500">
+                  "{currentWorkspace.w_name}"{" "}
+                </span>
+                ?
+              </h2>
+              <div>
+                {workspaceError && (
+                  <p className="text-red-500 text-sm mt-2">{workspaceError}</p>
+                )}
+              </div>
+              <div className="flex gap-3">
+                <button
+                  disabled={loading2}
+                  onClick={deleteWorkspace}
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 xl:text-lg font-semibold rounded-md transition-colors"
+                >
+                  {loading2 ? <Spinner style="inline w-4 h-4" /> : "Delete"}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowWorkspaceDeleteModal(false);
+                    setWorkspaceError("");
+                  }}
+                  className="flex-1 bg-black hover:bg-gray-700 text-white px-4 py-2 xl:text-lg rounded-md font-semibold transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!online && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center p-4 z-100"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.2)" }}
+        >
+          <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-lg shadow-lg max-w-md w-full">
+            <div className="p-6 pb-4">
+              <div className="flex items-center justify-center mb-4">
+                <div className="bg-yellow-200 p-3 rounded-full">
+                  <WifiOff className="w-8 h-8 text-yellow-700" />
+                </div>
+              </div>
+
+              <h2 className="text-xl font-semibold text-gray-800 text-center mb-2">
+                No Internet Connection
+              </h2>
+
+              <p className="text-gray-600 text-center text-sm leading-relaxed">
+                Please check your network connection and try again. Make sure
+                you're connected to Wi-Fi or mobile data.
+              </p>
+            </div>
+
+            <div className="px-6 pb-6">
+              <button
+                onClick={() => {
+                  setOnline(true);
+                }}
+                className="w-full flex items-center justify-center space-x-2 px-4 py-3 xl:py-3 xl:px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 font-semibold"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!session && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center p-4 z-100"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.2)" }}
+        >
+          <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-lg shadow-lg max-w-md w-full">
+            <div className="p-6 pb-4">
+              <div className="flex items-center justify-center mb-4">
+                <div className="bg-yellow-200 p-3 rounded-full">
+                  <User2Icon className="w-8 h-8 text-yellow-700" />
+                </div>
+              </div>
+
+              <h2 className="text-xl font-semibold text-gray-800 text-center mb-2">
+                Session Expired
+              </h2>
+
+              <p className="text-gray-600 text-center text-sm leading-relaxed">
+                Your session has been expired. Please try to login or create a
+                new account.
+              </p>
+            </div>
+
+            <div className="px-6 pb-6">
+              <button
+                onClick={() => {
+                  setSession(true);
+                  localStorage.removeItem("token");
+                  localStorage.removeItem("wid");
+                  navigate("/login", { replace: true });
+                }}
+                className="w-full flex items-center justify-center space-x-2 px-4 py-3 xl:py-3 xl:px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 font-semibold"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Dashboard;

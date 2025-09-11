@@ -44,41 +44,36 @@ func GetWorkspace(user_id int) (int, []model.Workspace, error) {
 }
 
 // Create new workspace
-func CreateWorkspace(w_name string, user_id int) (int, error) {
+func CreateWorkspace(w_name string, user_id int) (int, int, error) {
 
-	_, err := config.Db.Conn.Exec("INSERT INTO workspace (w_name, u_id) values (?,?)", w_name, user_id)
+	result, err := config.Db.Conn.Exec("INSERT INTO workspace (w_name, u_id) values (?,?)", w_name, user_id)
 	if err != nil {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 			switch mysqlErr.Number {
 			case 1062:
-				return http.StatusConflict, errors.New("duplicate values are not allowed")
+				return 0, http.StatusConflict, errors.New("duplicate values are not allowed")
 			case 1452:
-				return http.StatusBadRequest, errors.New("invalid user id")
+				return 0, http.StatusBadRequest, errors.New("invalid user id")
 			default:
-				return http.StatusInternalServerError, errors.New("unknown server error")
+				return 0, http.StatusInternalServerError, errors.New("unknown server error")
 			}
 		} else {
-			return http.StatusInternalServerError, errors.New("internal Server Error")
+			return 0, http.StatusInternalServerError, errors.New("internal Server Error")
 		}
 	}
-	return http.StatusOK, nil
+	wid, err := result.LastInsertId()
+	if err != nil {
+		return 0, http.StatusInternalServerError, errors.New("failed to retrieve last insert ID")
+	}
+	return int(wid), http.StatusOK, nil
 }
 
 // Get all task in workspace
-func GetWorkspaceTask(w_name string, u_id int, completedStr string, priorityStr string, sort string, page int, limit int, dueBeforeStr string, order string) (int, []TaskResponse, error) {
-	// Step 1: Check if workspace exists and get w_id
+func GetWorkspaceTask(w_name string, u_id int, completedStr string, priorityStr string, sort string, page int, limit int, dueBeforeStr string, order string) (int, []TaskResponse, int, error) {
 
-	var wID int
-	err := config.Db.Conn.QueryRow(
-		"SELECT w_id FROM workspace WHERE w_name = ? AND u_id = ?",
-		w_name, u_id,
-	).Scan(&wID)
-
-	if err == sql.ErrNoRows {
-		return http.StatusNotFound, nil, fmt.Errorf("workspace not found")
-	}
+	wID, status, err := FindWorkspaceWithName(w_name, u_id)
 	if err != nil {
-		return http.StatusInternalServerError, nil, err
+		return status, nil, 0, err
 	}
 
 	var completed *bool
@@ -106,14 +101,20 @@ func GetWorkspaceTask(w_name string, u_id int, completedStr string, priorityStr 
 
 	query := `SELECT t_name, priority, markCompleted, deadline, created_at FROM task WHERE w_id = ? AND (markCompleted = ? OR ? is NULL) AND (priority = ? OR ? is NULL) AND (deadline < ? OR ? is NULL)`
 
-	query += fmt.Sprintf(` ORDER BY %s %s LIMIT ? OFFSET ?`, sort, order)
+	query += fmt.Sprintf(` ORDER BY %s %s`, sort, order)
+
+	if sort == "priority" || sort == "markcompleted" {
+		query += fmt.Sprintf(`, %s %s`, `created_at`, `DESC`)
+	}
+
+	query += ` LIMIT ? OFFSET ?`
 
 	res, err := config.Db.Conn.Query(
 		query,
 		wID, completed, completed, priority, priority, dueBefore, dueBefore, limit, (page-1)*limit,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, nil, err
+		return http.StatusInternalServerError, nil, 0, err
 	}
 	defer res.Close()
 
@@ -121,16 +122,21 @@ func GetWorkspaceTask(w_name string, u_id int, completedStr string, priorityStr 
 	for res.Next() {
 		var ts TaskResponse
 		if err := res.Scan(&ts.T_Name, &ts.Priority, &ts.MarkCompleted, &ts.Deadline, &ts.Created_At); err != nil {
-			return http.StatusInternalServerError, nil, err
+			return http.StatusInternalServerError, nil, 0, err
 		}
 		tasks = append(tasks, ts)
 	}
 
 	if err = res.Err(); err != nil {
-		return http.StatusInternalServerError, nil, err
+		return http.StatusInternalServerError, nil, 0, err
 	}
-
-	return http.StatusOK, tasks, nil
+	var total_count int
+	err = config.Db.Conn.QueryRow("SELECT COUNT(*) AS total FROM task WHERE w_id = ? AND (markCompleted = ? OR ? IS NULL) AND (priority = ? OR ? IS NULL) AND (deadline < ? OR ? IS NULL)", wID, completed, completed, priority, priority, dueBefore, dueBefore).Scan(&total_count)
+	fmt.Print(err, "error sql")
+	if err != nil {
+		return http.StatusInternalServerError, nil, 0, err
+	}
+	return http.StatusOK, tasks, total_count, nil
 }
 
 // Create new task in workspace
@@ -157,31 +163,31 @@ func CreateWorkspaceTask(t_name string, priority int, deadline time.Time, w_name
 	return http.StatusOK, nil
 }
 
-func DeleteWorkspace(w_name string, u_id int) (int, error) {
+func DeleteWorkspace(wid int, u_id int) (int, error) {
 
-	wID, status, err := FindWorkspace(w_name, u_id)
+	status, err := FindWorkspace(wid, u_id)
 	if err != nil {
 		return status, err
 	}
-	_, err = config.Db.Conn.Exec("DELETE FROM workspace where w_id = ?", wID)
+	_, err = config.Db.Conn.Exec("DELETE FROM workspace where w_id = ?", wid)
 	if err != nil {
 		return http.StatusInternalServerError, errors.New("internal server error")
 	}
 	return http.StatusOK, nil
 }
 
-func FindWorkspace(w_name string, u_id int) (int, int, error) {
+func FindWorkspace(wid int, u_id int) (int, error) {
 	var wID int
 	err := config.Db.Conn.QueryRow(
-		"SELECT w_id FROM workspace WHERE w_name = ? AND u_id = ?",
-		w_name, u_id,
+		"SELECT w_id FROM workspace WHERE w_id = ? AND u_id = ?",
+		wid, u_id,
 	).Scan(&wID)
 
 	if err == sql.ErrNoRows {
-		return 0, http.StatusNotFound, errors.New("workspace not found")
+		return http.StatusNotFound, errors.New("workspace not found")
 	}
 	if err != nil {
-		return 0, http.StatusInternalServerError, errors.New("internal server error")
+		return http.StatusInternalServerError, errors.New("internal server error")
 	}
-	return wID, http.StatusOK, nil
+	return http.StatusOK, nil
 }

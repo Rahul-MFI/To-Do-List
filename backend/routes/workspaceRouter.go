@@ -16,6 +16,7 @@ import (
 
 func WorkspaceRouter(rg *gin.RouterGroup) {
 	workspace := rg.Group("/workspace")
+
 	workspace.Use(middleware.AuthMiddleware())
 	workspace.GET("/", controller.GetWorkspaceController)
 	workspace.POST("/", controller.CreateWorkspaceController)

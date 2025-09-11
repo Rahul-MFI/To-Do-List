@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"ToDo/utils"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -9,49 +10,60 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+func VerifyToken(authHeader string, secret string) (int, error) {
+	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		return 0, errors.New("authorization header missing or invalid")
+	}
+
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+
+	// Parse & validate token
+	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrSignatureInvalid
+		}
+		return []byte(secret), nil
+	})
+
+	if err != nil || !token.Valid {
+		return 0, errors.New("invalid token")
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		if userID, ok := claims["user_id"].(float64); ok && userID > 0 {
+			return int(userID), nil
+		}
+		return 0, errors.New("invalid token payload")
+	}
+
+	return 0, errors.New("unable to parse claims")
+}
+
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Check content type
-		if c.GetHeader("Content-Type") != "application/json" {
-			c.JSON(http.StatusUnsupportedMediaType, gin.H{"error": "Content-Type must be application/json"})
-			c.Abort()
-			return
-		}
+		if c.Request.Method == http.MethodPost ||
+			c.Request.Method == http.MethodPut ||
+			c.Request.Method == http.MethodPatch {
 
-		// Get Authorization header
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header missing or invalid"})
-			c.Abort()
-			return
-		}
-
-		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-
-		// Parse & validate token
-		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, jwt.ErrSignatureInvalid
-			}
-			return []byte(utils.GetEnv().JWT_SECRET), nil
-		})
-
-		if err != nil || !token.Valid {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-			c.Abort()
-			return
-		}
-
-		if claims, ok := token.Claims.(jwt.MapClaims); ok {
-			if user_id, ok := claims["user_id"].(float64); ok && user_id > 0 {
-				c.Set("user_id", int(user_id))
-			} else {
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token payload"})
+			if c.GetHeader("Content-Type") != "application/json" {
+				c.JSON(http.StatusUnsupportedMediaType, gin.H{
+					"error": "Content-Type must be application/json",
+				})
 				c.Abort()
 				return
 			}
 		}
 
+		authHeader := c.GetHeader("Authorization")
+		userID, err := VerifyToken(authHeader, utils.GetEnv().JWT_SECRET)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			c.Abort()
+			return
+		}
+
+		c.Set("user_id", userID)
 		c.Next()
 	}
 }

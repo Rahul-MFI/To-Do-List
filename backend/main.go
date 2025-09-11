@@ -18,6 +18,7 @@ func main() {
 	_ = utils.GetEnv()
 
 	r := routes.SetupRouter()
+
 	r.GET("/", routeHandler)
 
 	fmt.Println("Server running on http://localhost:3001")

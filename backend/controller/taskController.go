@@ -86,6 +86,7 @@ func DeleteTaskController(c *gin.Context) {
 	var req DeleteTaskRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad Request"})
+		return
 	}
 
 	u_id := c.GetInt("user_id")
