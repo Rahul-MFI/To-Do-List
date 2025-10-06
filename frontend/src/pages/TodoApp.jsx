@@ -14,10 +14,10 @@ import {
   ArrowDown,
   XCircle,
 } from "lucide-react";
-import Spinner from "../../components/Spinner";
+import Spinner from "../components/Spinner";
 import axiosInstance from "../../middleware/axiosInstance";
-import { useNetwork } from "../../components/useNetwork";
-import SuccessBar from "../../components/SuccessBar";
+import { useNetwork } from "../components/useNetwork";
+import SuccessBar from "../components/SuccessBar";
 
 const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
   const [tasks, setTasks] = useState([]);

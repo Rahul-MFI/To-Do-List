@@ -143,7 +143,8 @@ func GetWorkspaceTask(w_name string, u_id int, completedStr string, priorityStr 
 func CreateWorkspaceTask(t_name string, priority int, deadline time.Time, w_name string, u_id int) (int, error) {
 
 	now := time.Now().UTC()
-	if _, err := config.Db.Conn.Exec("INSERT INTO task (t_name, priority, deadline, created_at, w_id) VALUES (?,?,?,?, (SELECT w_id FROM workspace WHERE w_name = ? AND u_id = ?));", t_name, priority, deadline, now, w_name, u_id); err != nil {
+	result, err := config.Db.Conn.Exec("INSERT INTO task (t_name, priority, deadline, created_at, w_id) VALUES (?,?,?,?, (SELECT w_id FROM workspace WHERE w_name = ? AND u_id = ?));", t_name, priority, deadline, now, w_name, u_id)
+	if err != nil {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 			fmt.Print(mysqlErr.Message)
 			switch mysqlErr.Number {
@@ -160,7 +161,45 @@ func CreateWorkspaceTask(t_name string, priority int, deadline time.Time, w_name
 			return http.StatusInternalServerError, errors.New("internal Server Error")
 		}
 	}
+	var tId64 int64
+	tId64, err = result.LastInsertId()
+	if err != nil {
+		return http.StatusInternalServerError, errors.New("failed to retrieve last insert ID")
+	}
+	var t_id = int(tId64)
+	_, err = createSchedule(u_id, "Task reminder - 1 minute to finish", "Complete the task "+getTrimString(t_name)+" in "+getTrimString(w_name)+" workspace by ", deadline, t_id)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
 	return http.StatusOK, nil
+}
+
+func createSchedule(u_id int, title string, message string, deadline time.Time, t_id int) (int, error) {
+	scheduledFor1min := deadline.Add(-time.Duration(1) * time.Minute)
+	scheduledFor10min := deadline.Add(-time.Duration(10) * time.Minute)
+	scheduledFor1hour := deadline.Add(-time.Duration(60) * time.Minute)
+	var err error
+	_, err = config.Db.Conn.Exec("INSERT INTO table_schedule (u_id, title, message, deadline, duration, t_id) VALUES (?,?,?,?,?,?)", u_id, title, message+"1 minute.", scheduledFor1min, 1, t_id)
+	if err != nil {
+		return http.StatusInternalServerError, errors.New("failed to create schedule")
+	}
+	_, err = config.Db.Conn.Exec("INSERT INTO table_schedule (u_id, title, message, deadline, duration, t_id) VALUES (?,?,?,?,?,?)", u_id, title, message+"10 minutes.", scheduledFor10min, 10, t_id)
+	if err != nil {
+		return http.StatusInternalServerError, errors.New("failed to create schedule")
+	}
+	_, err = config.Db.Conn.Exec("INSERT INTO table_schedule (u_id, title, message, deadline, duration, t_id) VALUES (?,?,?,?,?,?)", u_id, title, message+"1 hour.", scheduledFor1hour, 60, t_id)
+	if err != nil {
+		return http.StatusInternalServerError, errors.New("failed to create schedule")
+	}
+	return http.StatusOK, nil
+}
+
+func getTrimString(s string) string {
+	if len(s) > 20 {
+		return s[:20] + "..."
+	} else {
+		return s
+	}
 }
 
 func DeleteWorkspace(wid int, u_id int) (int, error) {

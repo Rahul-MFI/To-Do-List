@@ -2,8 +2,9 @@ import React, { useMemo, useState } from "react";
 import { Eye, EyeOff, Mail, Lock, User, Phone } from "lucide-react";
 import axios from "axios";
 import { Navigate, useNavigate } from "react-router-dom";
-import PrimaryButton from "../../components/PrimaryButton";
-import Spinner from "../../components/Spinner";
+import PrimaryButton from "../components/PrimaryButton";
+import Spinner from "../components/Spinner";
+import subscribeUserToPush from "../components/subscribe";
 
 const AuthPage = ({ isLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -246,13 +247,13 @@ const AuthPage = ({ isLogin }) => {
       });
       if (response.status === 200) {
         console.log("✅ User Login successfully:", response.data);
+        const token = response.data.token;
+        addLocalStorage(token);
+        resetData();
+        setSubmitError("");
+        await subscribeUserToPush()
+        navigate("/dashboard", { replace: true });
       }
-      console.log("Signup submitted:", response);
-      const token = response.data.token;
-      addLocalStorage(token);
-      resetData();
-      setSubmitError("");
-      navigate("/dashboard", { replace: true });
     } catch (err) {
       if (err.response) {
         const { data } = err.response;
@@ -287,14 +288,14 @@ const AuthPage = ({ isLogin }) => {
         password,
       });
 
-      if (response.status === 201) {
+      if (response.status === 200) {
         console.log("✅ User created successfully:");
+        const token = response.data.token;
+        addLocalStorage(token);
+        resetData();
+        await subscribeUserToPush()
+        navigate("/dashboard", { replace: true });
       }
-      console.log("Signup submitted:", response);
-      const token = response.data.token;
-      addLocalStorage(token);
-      resetData();
-      navigate("/dashboard", { replace: true });
     } catch (err) {
       if (err.response) {
         const { data } = err.response;

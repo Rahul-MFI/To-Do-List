@@ -1,18 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ClipboardList,
   Menu,
+  Settings,
   Trash2,
+  User,
   User2Icon,
   WifiOff,
   X,
 } from "lucide-react";
-import Spinner from "../../components/Spinner";
+import Spinner from "../components/Spinner";
 import TodoApp from "./TodoApp";
 import axiosInstance from "../../middleware/axiosInstance";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import WelcomePage from "./WelcomePage";
-import { useNetwork } from "../../components/useNetwork";
+import { useNetwork } from "../components/useNetwork";
 
 const Dashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -20,23 +22,34 @@ const Dashboard = () => {
   const [currentWorkspace, setCurrentWorkspace] = useState(menuItems[0] || {});
   const [loading, setLoading] = useState(true);
   const [loading2, setLoading2] = useState(false);
-  const VITE_LOCALHOST = import.meta.env.VITE_LOCALHOST;
   const [searchParams] = useSearchParams();
   const wid = searchParams.get("wid");
   const [workspaceError, setWorkspaceError] = useState("");
-
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const dropdownRef = useRef(null);
   const [showWorkspaceModel, setShowWorkspaceModel] = useState(false);
   const [showWorkspaceDeleteModal, setShowWorkspaceDeleteModal] =
-    useState(false);
+  useState(false);
   const [workspaceName, setWorkspaceName] = useState("");
-
+  
   const [currentPage, setCurrentPage] = useState(1);
-
-  const { online, setOnline, session, setSession } = useNetwork();
+  
+  const { online, setOnline, session, setSession, soundEnabled } = useNetwork();
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowProfileDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+  
   const navigate = useNavigate();
 
   const handleNavigation = (item) => {
@@ -47,6 +60,27 @@ const Dashboard = () => {
     if (window.innerWidth < 768) {
       toggleSidebar();
     }
+  };
+
+  const handleLogout = async () => {
+    try {
+        const registration = await navigator.serviceWorker.getRegistration();
+        let subscription = await registration.pushManager.getSubscription();
+        subscription = JSON.parse(JSON.stringify(subscription));
+        await axiosInstance.post("unsubscribe",  {
+          "endpoint": subscription.endpoint,
+          "expirationTime": null,
+          "keys": {
+              "p256dh": subscription.keys.p256dh,
+              "auth": subscription.keys.auth,
+          },
+        });
+    } catch (error) {
+      console.error("Error unsubscribing:", error);
+    }
+    localStorage.removeItem("token");
+    localStorage.removeItem("wid");
+    navigate("/login", { replace: true });
   };
 
   const fetchMenuItems = async () => {
@@ -248,7 +282,6 @@ const Dashboard = () => {
                 </div>
 
                 <nav className="h-5/6 xl:h-4/5 flex flex-col py-3">
-                  {/* Scrollable content */}
                   <div className="px-4 mb-4">
                     <button
                       onClick={() => {
@@ -316,9 +349,7 @@ const Dashboard = () => {
               <div className="px-4 mb-4 xl:mb-8">
                 <button
                   onClick={() => {
-                    localStorage.removeItem("token");
-                    localStorage.removeItem("wid");
-                    navigate("/login", { replace: true });
+                    handleLogout()
                   }}
                   className="w-full flex items-center justify-center space-x-2 px-4 py-3 xl:py-3 xl:px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 font-semibold"
                 >
@@ -332,16 +363,27 @@ const Dashboard = () => {
             {menuItems.length > 0 && (
               <header className="bg-yellow-500 shadow-sm px-4 py-3 md:px-6">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-4 w-full">
                     <button
                       onClick={toggleSidebar}
                       className="p-2 rounded-lg md:hidden"
                     >
                       <Menu size={24} className="text-white font-bold" />
                     </button>
-                    <h1 className="text-lg font-bold text-white">
+                    <div className="text-lg xl:text-xl w-full font-bold text-white flex flex-row items-center justify-between space-x-4 ">
                       {currentWorkspace.w_name}
-                    </h1>
+                      <div className="relative px-4" ref={dropdownRef}>
+                        <button
+                          onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                          className="flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 rounded-full"
+                        >
+                          <div className="w-10 h-10 bg-yellow-50 rounded-full flex items-center justify-center hover:bg-yellow-100 transition-colors">
+                            <User className="w-5 h-5 text-yellow-800" />
+                          </div>
+                        </button>
+                        {showProfileDropdown && <ProfileDropdown setShowProfileDropdown={setShowProfileDropdown} />}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </header>
@@ -557,3 +599,59 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+function ProfileDropdown ({ setShowProfileDropdown }) {
+
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false)
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+
+  useEffect(() => {
+    const fetchPersonalInfo = async () => {
+     try {
+      setIsLoading(true)
+        const response = await axiosInstance.get("auth/profile");
+        setUsername(response.data.username);
+        setEmail(response.data.email);
+        console.log(response)
+     } catch (error) {
+        console.error("Error fetching personal info:", error);
+     } finally {
+      setIsLoading(false)
+     }
+    }
+    fetchPersonalInfo();
+  }, []);
+
+  return (
+
+  <div className="absolute top-16 right-0 bg-white rounded-lg shadow-lg border border-yellow-200 w-56 z-100">
+    <div className="p-4 w-full flex flex-row justify-center items-center border-b border-yellow-100">
+      {isLoading ? <Spinner style={"text-black"} /> : 
+      (<div className="flex items-center space-x-3">
+        <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center">
+          <User className="w-6 h-6 text-yellow-800" />
+        </div>
+        <div>
+          <h2 className="font-semibold text-black">{username.length > 10 ? username.slice(0,10)+"..." : username}</h2>
+          <p className="text-sm text-black">{email.length > 15 ? email.slice(0,15)+"..." : email}</p>
+        </div>
+      </div>)
+      }
+    </div>
+    <div className="p-2">
+      <button
+        onClick={() => {
+          setShowProfileDropdown(false);
+          navigate('/settings');
+        }}
+        className="w-full flex items-center space-x-3 px-3 py-2 text-left hover:bg-yellow-50 rounded-md transition-colors"
+      >
+        <Settings className="w-6 h-6 text-yellow-600" />
+        <span className="text-lg text-black">Settings</span>
+      </button>
+    </div>
+  </div>
+  )
+}

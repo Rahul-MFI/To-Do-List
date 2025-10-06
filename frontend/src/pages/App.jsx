@@ -1,10 +1,11 @@
 import { Routes, Route } from "react-router-dom";
 import PageNotFound from "./PageNotFound";
 import AuthPage from "./AuthPage";
-import TodoApp from "./TodoApp";
 import ProtectedRoute from "./ProtectedRoute";
 import Dashboard from "./Dashboard";
-import { NetworkProvider } from "../../components/NetworkProvider";
+import { NetworkProvider } from "../components/NetworkProvider";
+import SettingsPage from "./Settings";
+import NotificationSettings from "../components/NotificationSettings";
 
 function App() {
   return (
@@ -21,6 +22,11 @@ function App() {
           </NetworkProvider>
         }
       />
+      <Route path="/settings" element={<NetworkProvider>
+            <ProtectedRoute>
+              <SettingsPage />
+            </ProtectedRoute>
+          </NetworkProvider>} />
 
       <Route path="*" element={<PageNotFound />} />
     </Routes>

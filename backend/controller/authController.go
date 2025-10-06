@@ -4,6 +4,7 @@ import (
 	"ToDo/middleware"
 	"ToDo/service"
 	"ToDo/utils"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -68,4 +69,27 @@ func VerifyController(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully verified token"})
+}
+
+func ProfileController(c *gin.Context) {
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header missing"})
+		return
+	}
+
+	u_id, err := middleware.VerifyToken(authHeader, utils.GetEnv().JWT_SECRET)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	fmt.Print(u_id)
+	user, err := service.GetProfile(u_id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully fetched profile", "username": user.Username, "email": user.Email})
 }

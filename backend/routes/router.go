@@ -23,6 +23,7 @@ func SetupRouter() *gin.Engine {
 	AuthRouter(api)
 	WorkspaceRouter(api)
 	TaskRouter(api)
+	SubscriptionRouter(api)
 
 	return r
 }

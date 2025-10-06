@@ -66,3 +66,13 @@ func Login(email, password string) (string, int, error) {
 	}
 	return token, http.StatusOK, nil
 }
+
+func GetProfile(u_id int) (model.Users, error) {
+	var user model.Users
+	err := config.Db.Conn.QueryRow("SELECT username, email FROM users WHERE u_id = ?", u_id).
+		Scan(&user.Username, &user.Email)
+	if err != nil {
+		return model.Users{}, err
+	}
+	return user, nil
+}

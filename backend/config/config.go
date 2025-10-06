@@ -57,6 +57,45 @@ func (db *DB) InitializeTables() error {
 			UNIQUE KEY t_name_wid (t_name, w_id),
 			FOREIGN KEY (w_id) REFERENCES workspace(w_id) ON DELETE CASCADE
 		)`,
+		`CREATE TABLE IF NOT EXISTS subscriptions (
+			s_id INT AUTO_INCREMENT PRIMARY KEY,
+			u_id INT NOT NULL,
+			endpoint TEXT NOT NULL,
+			p256dh TEXT NOT NULL,
+			auth TEXT NOT NULL,
+			active BOOLEAN DEFAULT TRUE NOT NULL,
+			created_at TIMESTAMP NOT NULL,
+			UNIQUE KEY unique_subscription (endpoint(255), p256dh(255), auth(255)),
+			CONSTRAINT fk_subscription_user FOREIGN KEY (u_id) REFERENCES users(u_id) ON DELETE CASCADE
+		);`,
+
+		`CREATE TABLE IF NOT EXISTS table_schedule (
+			ts_id INT AUTO_INCREMENT PRIMARY KEY,
+			u_id INT NOT NULL,
+			title VARCHAR(255) NOT NULL,
+			message TEXT NOT NULL,
+			deadline DATETIME NOT NULL,
+			duration INT NOT NULL,
+			t_id INT NOT NULL,
+			CONSTRAINT fk_schedule_user FOREIGN KEY (u_id) REFERENCES users(u_id) ON DELETE CASCADE,
+			CONSTRAINT fk_user_task FOREIGN KEY (t_id) REFERENCES task(t_id) ON DELETE CASCADE
+		);`,
+
+		`CREATE TABLE IF NOT EXISTS notification_deliveries (
+			nd_id INT AUTO_INCREMENT PRIMARY KEY,
+			ts_id INT NOT NULL,
+			s_id INT NOT NULL,
+			scheduled_for DATETIME NOT NULL,
+			sent_at DATETIME DEFAULT NULL,
+			status ENUM('sent', 'failed'),
+			failure_reason TEXT,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+			CONSTRAINT fk_delivery_schedule FOREIGN KEY (ts_id) REFERENCES table_schedule(ts_id) ON DELETE CASCADE,
+			CONSTRAINT fk_delivery_subscription FOREIGN KEY (s_id) REFERENCES subscriptions(s_id) ON DELETE CASCADE,
+
+			UNIQUE KEY uniq_schedule_subscription (ts_id, s_id)
+		);`,
 	}
 
 	for _, table := range tables {

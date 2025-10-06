@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axiosInstance from "../../middleware/axiosInstance";
-import Spinner from "../../components/Spinner";
-import { useNetwork } from "../../components/useNetwork";
+import Spinner from "../components/Spinner";
+import { useNetwork } from "../components/useNetwork";
 
 function ProtectedRoute({ children }) {
   const [loading, setLoading] = useState(true);
