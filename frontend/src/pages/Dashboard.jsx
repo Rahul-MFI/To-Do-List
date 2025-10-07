@@ -56,6 +56,7 @@ const Dashboard = () => {
     setCurrentWorkspace(item);
     localStorage.setItem("wid", item.w_id);
     setCurrentPage(1);
+    console.log("navigate to ", item.w_name)
     navigate(`/dashboard?wid=${item.w_id}`, { replace: true });
     if (window.innerWidth < 768) {
       toggleSidebar();
@@ -111,29 +112,29 @@ const Dashboard = () => {
     const fetchcurrentWorkspaceId = () => {
       try {
         if (menuItems.length === 0) {
+          navigate(`/dashboard`, { replace: true });
           return;
         }
         const storedWid = localStorage.getItem("wid");
-        let targetWid = wid || storedWid;
-        if (targetWid && menuItems.length > 0) {
-          const selectedWorkspace = menuItems.find(
-            (item) => String(item.w_id) === String(targetWid)
-          );
-          if (selectedWorkspace) {
-            setCurrentWorkspace(selectedWorkspace);
-            navigate(`/dashboard?wid=${selectedWorkspace.w_id}`, {
-              replace: true,
-            });
-          } else {
-            navigate(`/dashboard?wid=${menuItems[0].w_id}`, { replace: true });
-          }
-        } else if (menuItems.length > 0) {
-          navigate(`/dashboard?wid=${menuItems[0].w_id}`, { replace: true });
+        const selectedWorkspaceWid = menuItems.find(
+          (item) => String(item.w_id) === String(wid)
+        );
+        const selectedWorkspaceStoredWid = menuItems.find(
+          (item) => String(item.w_id) === String(storedWid)
+        );
+        if (selectedWorkspaceWid) {
+          setCurrentWorkspace(selectedWorkspaceWid);
+          navigate(`/dashboard?wid=${selectedWorkspaceWid.w_id}`, { replace: true });
+        } else if (selectedWorkspaceStoredWid) {
+          setCurrentWorkspace(selectedWorkspaceStoredWid);
+          navigate(`/dashboard?wid=${selectedWorkspaceStoredWid.w_id}`, { replace: true });
         } else {
-          navigate(`/dashboard`, { replace: true });
+          const fallbackWorkspace = menuItems[0];
+          setCurrentWorkspace(fallbackWorkspace);
+          navigate(`/dashboard?wid=${fallbackWorkspace.w_id}`, { replace: true });
         }
       } catch (err) {
-        console.error("Error setting current page:", err);
+        console.error("Error setting current workspace:", err);
       }
     };
 
@@ -157,12 +158,16 @@ const Dashboard = () => {
       if (response.status === 200) {
         const new_wid = response.data.wid;
         localStorage.setItem("wid", new_wid);
+
         const newWorkspace = { w_id: new_wid, w_name: workspaceName };
         setShowWorkspaceModel(false);
         setWorkspaceName("");
         setWorkspaceError("");
-        handleNavigation(newWorkspace);
-        fetchMenuItems();
+        setCurrentWorkspace(newWorkspace);
+        if (window.innerWidth < 768) {
+          toggleSidebar();
+        }
+        window.location.replace(`/dashboard?wid=${new_wid}`);
       } else {
         setWorkspaceError("Failed to create workspace. Please try again.");
       }
