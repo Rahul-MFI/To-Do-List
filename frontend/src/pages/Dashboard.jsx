@@ -34,7 +34,7 @@ const Dashboard = () => {
   
   const [currentPage, setCurrentPage] = useState(1);
   
-  const { online, setOnline, session, setSession, soundEnabled } = useNetwork();
+  const { online, setOnline, session, setSession } = useNetwork();
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };

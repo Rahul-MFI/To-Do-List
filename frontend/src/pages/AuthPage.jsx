@@ -251,7 +251,6 @@ const AuthPage = ({ isLogin }) => {
         addLocalStorage(token);
         resetData();
         setSubmitError("");
-        await subscribeUserToPush()
         navigate("/dashboard", { replace: true });
       }
     } catch (err) {
@@ -293,7 +292,6 @@ const AuthPage = ({ isLogin }) => {
         const token = response.data.token;
         addLocalStorage(token);
         resetData();
-        await subscribeUserToPush()
         navigate("/dashboard", { replace: true });
       }
     } catch (err) {

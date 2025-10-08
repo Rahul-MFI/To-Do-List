@@ -147,7 +147,7 @@ type Subscription struct {
 
 func main() {
 	// Hardcoded subscription (copy this from your frontend console log)
-	subscriptionJSON := `{"endpoint":"https://fcm.googleapis.com/fcm/send/fGYQCpP4W7k:APA91bHghKopbEQOyrEQQuoIebp2pwytST3ogL3NZy47NTOzuDTUa13wu1tw1WkBZ1ZwtwLFgHED0Wof_4-ZeXflJPVPE6vNLlSWW7FxoInq0Vn6560hGeQ7Id3UJuc6n68xDI1t9RsW","expirationTime":null,"keys":{"p256dh":"BGIdShsQfAbyc3ripfes_EoEj4OQGWsVJJX-JMDX62Sy8Bz58edn_RChiygECJj66xzcHVLX85817j9cd_C-7uM","auth":"_3BI3U007_fNGlzBGiNCrw"}}`
+	subscriptionJSON := `{"endpoint":"https://fcm.googleapis.com/fcm/send/cZ-JnE76QQU:APA91bED-BPT7Yrm604_0OSl0UZgd0hLvxUnDFkqdHDz4CGNcAnU0Xa_ZzNw7COgqj1oXu8lSfQCA5XAoV51J5bZyV7y_NMoo3Oiacc5ENI1RF1RLBSje011g8V4KGDfI_UaS6h4slRi","expirationTime":null,"keys":{"p256dh":"BDw4XOmtvlDmyGbKKP8DaU0imK7KRBhm_eN9ML2OFI_z3aiw00GopFKy2CQjilOYHBDNn9DvLyfzlVgauC0z-wM","auth":"pIGN9GUqzcc7wvwr6ihcRw"}}`
 
 	// Hardcoded VAPID keys (replace with your own)
 	utils.LoadEnv(".env")

@@ -1,4 +1,4 @@
-import { ArrowLeft, Bell, BellDot, BellOffIcon, Navigation, Volume2 } from "lucide-react";
+import { ArrowLeft, Bell, BellDot, BellOffIcon, Send, User2Icon, Volume2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../middleware/axiosInstance";
@@ -7,50 +7,93 @@ import Spinner from "../components/Spinner";
 import { useNetwork } from "../components/useNetwork";
 
 function SettingsPage() {
-  const [isEnabled, setIsEnabled] = useState(false);
+  const { session, setSession } = useNetwork();
   const [isMuted, setIsMuted] = useState(false);
   const [permissionStatus, setPermissionStatus] = useState("default");
   const { soundEnabled, setSoundEnabled } = useNetwork();
-  const [isLoading, setIsLoading] = useState(false);
+  const [EnableNotifications, setEnableNotifications] = useState(false);
+  const [isLoading2, setIsLoading2] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchNotificationActivation = async () => {
 
-    }
-    const handleEnableNotifications = async () => {
+    const fetchNotificationActivation = async () => {
       const status = Notification.permission;
       setPermissionStatus(status);
-      setIsEnabled(status === "granted");
-      if ("Notification" in window && status !== "denied") {
-        try {
-          const permission = await Notification.requestPermission();
-          setPermissionStatus(permission);
-          if (permission === "granted") {
-            setIsEnabled(true);
-            console.log("Notification permission granted");
-            subscribeUserToPush();
-            new Notification("Notifications Enabled!", {
-              body: "You will now receive notifications from this site.",
-              icon: "🔔",
-            });
-          } else {
-            setIsEnabled(false);
-            console.log("Notification permission denied");
-          }
-        } catch (error) {
-          console.error("Error requesting notification permission:", error);
-        }
-      }
-    };
-    handleEnableNotifications();
+    }
     fetchNotificationActivation();
   }, []);
 
+  const handleEnableNotifications = async () => {
+    const status = Notification.permission;
+    if (status === "granted") { 
+      return; 
+    }
+    if (status === "denied") {
+      setEnableNotifications(true);
+      return;
+    }
+    setPermissionStatus(status);
+    if ("Notification" in window && status !== "denied") {
+      try {
+        setEnableNotifications(true);
+        const permission = await Notification.requestPermission();
+        setPermissionStatus(permission);
+        if (permission === "granted") {
+          console.log("Notification permission granted");
+          await subscribeUserToPush();
+        } else {
+          console.log("Notification permission denied");
+        }
+      } catch (error) {
+        console.error("Error requesting notification permission:", error);
+      } finally {
+        setEnableNotifications(false);
+      }
+    }
+  };
+
+  const testNotification = async () => {
+    try {
+      const registration = await navigator.serviceWorker.ready;
+  
+      await registration.showNotification("Test Notification", {
+        body: "Test Notification",
+        requireInteraction: true,
+        icon: "/icon.png",
+        badge: "/icon.png",
+        image: "/icon.png",
+      });
+  
+      const allClients = await registration.clients.matchAll({
+        includeUncontrolled: true,
+      });
+  
+      for (const client of allClients) {
+        if (client.url.includes("/dashboard") || client.url.includes("/settings")) {
+          client.postMessage({
+            type: "push-sound",
+            payload: {
+              title: "Test Notification",
+              body: "Friend Request",
+              icon: "/icon.png",
+              badge: "/icon.png",
+              image: "/icon.png",
+            },
+          });
+        }
+      }
+      console.log("✅ Test notification sent and message posted.");
+    } catch (error) {
+      console.error("❌ Error showing test notification:", error);
+    }
+  };
+  
+
   const toggleNotifications = async () => {
-    setIsLoading(true);
     if (isMuted) {
       try {
+        setIsLoading2(true);
         const registration = await navigator.serviceWorker.getRegistration();
         let subscription = await registration.pushManager.getSubscription();
         subscription = JSON.parse(JSON.stringify(subscription));
@@ -82,16 +125,20 @@ function SettingsPage() {
         setIsMuted(false);
       } catch (error) {
         console.error("Error unsubscribing:", error);
+      } finally {
+        setIsLoading2(false);
       }
     } else {
       try {
+        setIsLoading2(true);
         await subscribeUserToPush();
         setIsMuted(true);
       } catch (error) {
         console.error("Error subscribing:", error);
+      } finally {
+        setIsLoading2(false);
       }
     }
-    setIsLoading(false);
   };
 
   return (
@@ -129,7 +176,7 @@ function SettingsPage() {
 
           <div className="p-6 space-y-6">
             {/* Allow Notifications */}
-            <div className="flex items-center justify-between py-4 border-b border-yellow-100">
+            <div className="flex items-center justify-between py-4 px-2 border-b border-yellow-100">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-yellow-100 rounded-lg">
                   <BellDot className="w-5 h-5 text-yellow-600" />
@@ -143,23 +190,10 @@ function SettingsPage() {
                   </p>
                 </div>
               </div>
-              {isLoading ? (
-                <Spinner />
-              ) : (
-                <button
-                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 ${
-                    isEnabled ? "bg-yellow-500" : "bg-gray-200"
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                      isEnabled ? "translate-x-5" : "translate-x-0"
-                    }`}
-                  />
-                </button>
-              )}
+              <span className={`text-md font-medium ${permissionStatus === "granted" ? "text-green-600" : permissionStatus === "denied" ? "text-red-600" : "text-gray-600" }`}>{permissionStatus.charAt(0).toUpperCase() + permissionStatus.slice(1)}</span>
             </div>
 
+            {/* Activate notification */}
             <div className="flex items-center justify-between py-4 border-b border-yellow-100">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-yellow-100 rounded-lg">
@@ -174,8 +208,13 @@ function SettingsPage() {
                   </p>
                 </div>
               </div>
+              {isLoading2 ? (
+                <Spinner />
+              ) : ( 
               <button
+                disabled={isLoading2}
                 onClick={() => {
+                  handleEnableNotifications();
                   toggleNotifications();
                 }}
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 ${
@@ -188,6 +227,7 @@ function SettingsPage() {
                   }`}
                 />
               </button>
+              )}
             </div>
 
             {/* Allow Sound */}
@@ -220,12 +260,111 @@ function SettingsPage() {
                 />
               </button>
             </div>
+
+            {/* Test Notification Sound */}
+            <div className="flex items-center justify-between py-4 border-b border-yellow-100">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-yellow-100 rounded-lg">
+                  <Send className="w-5 h-5 text-yellow-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">
+                    Test Notification Sound 
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Send a test notification sound by button click
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  testNotification();
+                }}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2`}
+              >
+                Send
+              </button>
+            </div>
           </div>
         </div>
         <div className="flex w-full justify-center py-4 items-center space-x-3">
           Please allow sound and pop up navigation in your browser settings.
         </div>
       </main>
+      {!session && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center p-4 z-100"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.2)" }}
+        >
+          <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-lg shadow-lg max-w-md w-full">
+            <div className="p-6 pb-4">
+              <div className="flex items-center justify-center mb-4">
+                <div className="bg-yellow-200 p-3 rounded-full">
+                  <User2Icon className="w-8 h-8 text-yellow-700" />
+                </div>
+              </div>
+
+              <h2 className="text-xl font-semibold text-gray-800 text-center mb-2">
+                Session Expired
+              </h2>
+
+              <p className="text-gray-600 text-center text-sm leading-relaxed">
+                Your session has been expired. Please try to login or create a
+                new account.
+              </p>
+            </div>
+
+            <div className="px-6 pb-6">
+              <button
+                onClick={() => {
+                  setSession(true);
+                  localStorage.removeItem("token");
+                  localStorage.removeItem("wid");
+                  navigate("/login", { replace: true });
+                }}
+                className="w-full flex items-center justify-center space-x-2 px-4 py-3 xl:py-3 xl:px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 font-semibold"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {EnableNotifications && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center p-4 z-100"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.2)" }}
+        >
+          <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-lg shadow-lg max-w-md w-full">
+            <div className="p-6 pb-4">
+              <div className="flex items-center justify-center mb-4">
+                <div className="bg-yellow-200 p-3 rounded-full">
+                  <Bell className="w-8 h-8 text-yellow-700" />
+                </div>
+              </div>
+
+              <h2 className="text-xl font-semibold text-gray-800 text-center mb-2">
+                Allow Notifications
+              </h2>
+
+              <p className="text-gray-600 text-center text-sm leading-relaxed">
+                Please allow notification permission in your browser settings to receive notifications.
+              </p>
+            </div>
+            <div className="px-6 pb-6">
+              <button
+                onClick={() => {
+                  setEnableNotifications(false);
+                }}
+                className="w-full flex items-center justify-center space-x-2 px-4 py-3 xl:py-3 xl:px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 font-semibold"
+              >
+                Ok, Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
