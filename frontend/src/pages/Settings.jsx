@@ -69,6 +69,7 @@ function SettingsPage() {
     setPermissionStatus(status);
     if ("Notification" in window && status !== "denied") {
       try {
+        setIsLoading2(true);
         setEnableNotifications(true);
         const permission = await Notification.requestPermission();
         setPermissionStatus(permission);
@@ -76,8 +77,14 @@ function SettingsPage() {
             console.log("Notification permission granted");
             try {
               await subscribeUserToPush(setOnline, setSession);
-            } catch (error) {
-              console.error("Error subscribing to push:", error);
+              setIsMuted(true);
+            } catch (err) {
+              if (err.code === "ERR_NETWORK") {
+                setOnline(false);
+              } else if (err.status === 401) {
+                setSession(false);
+              }
+              console.error("Error subscribing to push:", err);
             }
         } else {
           console.log("Notification permission denied");
@@ -90,6 +97,7 @@ function SettingsPage() {
         }
         console.error("Error requesting notification permission:", error);
       } finally {
+        setIsLoading2(false);
         setEnableNotifications(false);
       }
     }
@@ -180,8 +188,13 @@ function SettingsPage() {
         setIsLoading2(true);
         await subscribeUserToPush(setOnline, setSession);
         setIsMuted(true);
-      } catch (error) {
-        console.error("Error subscribing:", error);
+      } catch (err) {
+        if (err.code === "ERR_NETWORK") {
+          setOnline(false);
+        } else if (err.status === 401) {
+          setSession(false);
+        }
+        console.error("Error subscribing:", err);
       } finally {
         setIsLoading2(false);
       }
@@ -277,8 +290,11 @@ function SettingsPage() {
               <button
                 disabled={isLoading2}
                 onClick={() => {
-                  handleEnableNotifications();
-                  toggleNotifications();
+                  if (permissionStatus === "granted") {
+                    toggleNotifications();
+                  } else {
+                    handleEnableNotifications();
+                  }
                 }}
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 ${
                   isMuted ? "bg-yellow-500" : "bg-gray-200"
