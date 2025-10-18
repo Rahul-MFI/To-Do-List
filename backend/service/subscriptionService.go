@@ -41,3 +41,15 @@ func Unsubscribe(endpoint string, p256dh string, auth string, u_id int) (int, er
 	}
 	return http.StatusOK, nil
 }
+
+func IsSubscribed(endpoint string, p256dh string, auth string, u_id int) (bool, int, error) {
+	var isActive bool
+	err := config.Db.Conn.QueryRow("SELECT active FROM subscriptions WHERE endpoint = ? AND p256dh = ? AND auth = ? AND u_id = ?", endpoint, p256dh, auth, u_id).Scan(&isActive)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, http.StatusOK, nil
+		}
+		return false, http.StatusInternalServerError, err
+	}
+	return isActive, http.StatusOK, nil
+}

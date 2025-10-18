@@ -5,28 +5,8 @@ import ProtectedRoute from "./ProtectedRoute";
 import Dashboard from "./Dashboard";
 import { NetworkProvider } from "../components/NetworkProvider";
 import SettingsPage from "./Settings";
-import { useEffect } from "react";
 
 function App() {
-
-  useEffect(() => {
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.ready.then(() => {
-
-        const handleMessage = (event) => {
-          if (event.data?.type === "push-sound") {
-              const audio = new Audio("/audio.mp3");
-              audio.play().catch((err) => console.warn("Audio blocked:", err));
-          }
-        };
-
-        navigator.serviceWorker.addEventListener("message", handleMessage);
-        return () => {
-          navigator.serviceWorker.removeEventListener("message", handleMessage);
-        };
-      });
-    }
-  }, []);
 
   return (
     <Routes>

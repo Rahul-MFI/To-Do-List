@@ -12,22 +12,51 @@ function SettingsPage() {
   const [permissionStatus, setPermissionStatus] = useState("default");
   const { soundEnabled, setSoundEnabled } = useNetwork();
   const [EnableNotifications, setEnableNotifications] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isLoading2, setIsLoading2] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-
-    const fetchNotificationActivation = async () => {
+    const fetchNotificationPermission = async () => {
       const status = Notification.permission;
       setPermissionStatus(status);
-    }
-    fetchNotificationActivation();
+    };
+
+    const fetchNotificationSubscription = async () => {
+      try {
+        setIsLoading(true);
+        const registration = await navigator.serviceWorker.getRegistration();
+        let subscription = await registration.pushManager.getSubscription();
+        subscription = JSON.parse(JSON.stringify(subscription));
+        const response =await axiosInstance.post("isSubscribed", {
+          endpoint: subscription.endpoint,
+          expirationTime: null,
+          keys: {
+            p256dh: subscription.keys.p256dh,
+            auth: subscription.keys.auth,
+          },
+        });
+        if (response.data.isActive) {
+          setIsMuted(response.data.isActive);
+        } else {
+          setIsMuted(false);
+        }
+      } catch (error) {
+        setIsMuted(false);
+        console.error("Error fetching notification subscription:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchNotificationPermission();
+    fetchNotificationSubscription();
   }, []);
 
   const handleEnableNotifications = async () => {
     const status = Notification.permission;
-    if (status === "granted") { 
-      return; 
+    if (status === "granted") {
+      return;
     }
     if (status === "denied") {
       setEnableNotifications(true);
@@ -56,7 +85,7 @@ function SettingsPage() {
   const testNotification = async () => {
     try {
       const registration = await navigator.serviceWorker.ready;
-  
+
       await registration.showNotification("Test Notification", {
         body: "Test Notification",
         requireInteraction: true,
@@ -142,6 +171,12 @@ function SettingsPage() {
   };
 
   return (
+    <div>
+      {isLoading ? (
+        <div className="h-dvh flex flex-col justify-center items-center">
+          <Spinner />
+        </div>
+      ) : (
     <div className="min-h-screen bg-yellow-50">
       <header className="shadow-sm bg-yellow-500">
         <div className=" mx-auto px-4 py-3 md:px-6">
@@ -190,7 +225,17 @@ function SettingsPage() {
                   </p>
                 </div>
               </div>
-              <span className={`text-md font-medium ${permissionStatus === "granted" ? "text-green-600" : permissionStatus === "denied" ? "text-red-600" : "text-gray-600" }`}>{permissionStatus.charAt(0).toUpperCase() + permissionStatus.slice(1)}</span>
+              <span
+                className={`text-md font-medium ${
+                  permissionStatus === "granted"
+                    ? "text-green-600"
+                    : permissionStatus === "denied"
+                    ? "text-red-600"
+                    : "text-gray-600"
+                }`}
+              >
+                {permissionStatus.charAt(0).toUpperCase() + permissionStatus.slice(1)}
+              </span>
             </div>
 
             {/* Activate notification */}
@@ -201,7 +246,7 @@ function SettingsPage() {
                 </div>
                 <div>
                   <h3 className="text-lg font-medium text-gray-900">
-                    Activate notification 
+                    Activate notification
                   </h3>
                   <p className="text-sm text-gray-600">
                     Enable to activate the notification
@@ -238,7 +283,7 @@ function SettingsPage() {
                 </div>
                 <div>
                   <h3 className="text-lg font-medium text-gray-900">
-                    Sound 
+                    Sound
                   </h3>
                   <p className="text-sm text-gray-600">
                     Enable sound effects and notification sounds
@@ -269,7 +314,7 @@ function SettingsPage() {
                 </div>
                 <div>
                   <h3 className="text-lg font-medium text-gray-900">
-                    Test Notification Sound 
+                    Test Notification Sound
                   </h3>
                   <p className="text-sm text-gray-600">
                     Send a test notification sound by button click
@@ -365,6 +410,8 @@ function SettingsPage() {
           </div>
         </div>
       )}
+    </div>
+    )}
     </div>
   );
 }

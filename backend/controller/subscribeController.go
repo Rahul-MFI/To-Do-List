@@ -48,3 +48,20 @@ func UnsubscribeController(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully deleted subscription."})
 }
+
+// POST /isSubscribed
+func IsSubscribedController(c *gin.Context) {
+	var req Request
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad Request"})
+		return
+	}
+
+	u_id := c.GetInt("user_id")
+	isActive, status, err := service.IsSubscribed(req.Endpoint, req.Keys.P256dh, req.Keys.Auth, u_id)
+	if err != nil {
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully fetched subscription", "isActive": isActive})
+}

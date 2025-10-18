@@ -16,4 +16,5 @@ func SubscriptionRouter(rg *gin.RouterGroup) {
 	rg.Use(middleware.AuthMiddleware())
 	rg.POST("/subscribe", controller.SubscribeController)
 	rg.POST("/unsubscribe", controller.UnsubscribeController)
+	rg.POST("/isSubscribed", controller.IsSubscribedController)
 }
