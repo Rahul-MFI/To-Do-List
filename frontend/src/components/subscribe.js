@@ -18,7 +18,7 @@ function urlBase64ToUint8Array(base64String) {
     return outputArray;
   }
 
-export async function subscribeUserToPush() {
+export async function subscribeUserToPush(setOnline = null, setSession = null) {
   if ("serviceWorker" in navigator && "PushManager" in window) {
     try {
         await navigator.serviceWorker.register("/sw.js");
@@ -42,8 +42,12 @@ export async function subscribeUserToPush() {
         });
         return response.data;
     } catch (err) {
+      if (err.code === "ERR_NETWORK" && setOnline) {
+        setOnline(false);
+      } else if (err.status === 401 && setSession) {
+        setSession(false);
+      }
       console.error("Push subscription failed:", err);
-      throw err;
     }
   } else {
     console.warn("Push not supported on this browser.");

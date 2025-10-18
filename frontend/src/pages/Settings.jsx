@@ -1,4 +1,4 @@
-import { ArrowLeft, Bell, BellDot, BellOffIcon, Send, User2Icon, Volume2 } from "lucide-react";
+import { ArrowLeft, Bell, BellDot, BellOffIcon, Send, User2Icon, Volume2, WifiOff } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../middleware/axiosInstance";
@@ -7,10 +7,9 @@ import Spinner from "../components/Spinner";
 import { useNetwork } from "../components/useNetwork";
 
 function SettingsPage() {
-  const { session, setSession } = useNetwork();
+  const { online, setOnline, session, setSession, soundEnabled, setSoundEnabled } = useNetwork();
   const [isMuted, setIsMuted] = useState(false);
   const [permissionStatus, setPermissionStatus] = useState("default");
-  const { soundEnabled, setSoundEnabled } = useNetwork();
   const [EnableNotifications, setEnableNotifications] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoading2, setIsLoading2] = useState(false);
@@ -42,6 +41,11 @@ function SettingsPage() {
           setIsMuted(false);
         }
       } catch (error) {
+        if (error.code === "ERR_NETWORK") {
+          setOnline(false);
+        } else if (error.status === 401) {
+          setSession(false);
+        }
         setIsMuted(false);
         console.error("Error fetching notification subscription:", error);
       } finally {
@@ -68,13 +72,22 @@ function SettingsPage() {
         setEnableNotifications(true);
         const permission = await Notification.requestPermission();
         setPermissionStatus(permission);
-        if (permission === "granted") {
-          console.log("Notification permission granted");
-          await subscribeUserToPush();
+          if (permission === "granted") {
+            console.log("Notification permission granted");
+            try {
+              await subscribeUserToPush(setOnline, setSession);
+            } catch (error) {
+              console.error("Error subscribing to push:", error);
+            }
         } else {
           console.log("Notification permission denied");
         }
       } catch (error) {
+        if (error.code === "ERR_NETWORK") {
+          setOnline(false);
+        } else if (error.status === 401) {
+          setSession(false);
+        }
         console.error("Error requesting notification permission:", error);
       } finally {
         setEnableNotifications(false);
@@ -153,6 +166,11 @@ function SettingsPage() {
         }
         setIsMuted(false);
       } catch (error) {
+        if (error.code === "ERR_NETWORK") {
+          setOnline(false);
+        } else if (error.status === 401) {
+          setSession(false);
+        }
         console.error("Error unsubscribing:", error);
       } finally {
         setIsLoading2(false);
@@ -160,7 +178,7 @@ function SettingsPage() {
     } else {
       try {
         setIsLoading2(true);
-        await subscribeUserToPush();
+        await subscribeUserToPush(setOnline, setSession);
         setIsMuted(true);
       } catch (error) {
         console.error("Error subscribing:", error);
@@ -376,6 +394,43 @@ function SettingsPage() {
         </div>
       )}
 
+    {!online && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center p-4 z-100"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.2)" }}
+        >
+          <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-lg shadow-lg max-w-md w-full">
+            <div className="p-6 pb-4">
+              <div className="flex items-center justify-center mb-4">
+                <div className="bg-yellow-200 p-3 rounded-full">
+                  <WifiOff className="w-8 h-8 text-yellow-700" />
+                </div>
+              </div>
+
+              <h2 className="text-xl font-semibold text-gray-800 text-center mb-2">
+                No Internet Connection
+              </h2>
+
+              <p className="text-gray-600 text-center text-sm leading-relaxed">
+                Please check your network connection and try again. Make sure
+                you're connected to Wi-Fi or mobile data.
+              </p>
+            </div>
+
+            <div className="px-6 pb-6">
+              <button
+                onClick={() => {
+                  setOnline(true);
+                }}
+                className="w-full flex items-center justify-center space-x-2 px-4 py-3 xl:py-3 xl:px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 font-semibold"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {EnableNotifications && (
         <div
           className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center p-4 z-100"
