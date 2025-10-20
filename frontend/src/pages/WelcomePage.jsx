@@ -81,7 +81,7 @@ const WelcomePage = () => {
               onClick={() => {
                 navigate("/register");
               }}
-              className={`px-2 py-1 lg:px-4 lg:py-2 rounded border border-yellow-500 hover:bg-yellow-200 text-yellow-500`}
+              className={`px-2 py-1 lg:px-4 lg:py-2 rounded border border-yellow-500 hover:bg-gray-50 text-yellow-500`}
             >
               Sign up
             </button>
