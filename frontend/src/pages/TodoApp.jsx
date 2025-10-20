@@ -195,7 +195,7 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
       const screenHeight = window.innerHeight;
       const screenWidth = window.innerWidth;
 
-      const reservedSpace = screenWidth >= 1280 ? 280 : 260;
+      const reservedSpace = screenWidth >= 1280 ? 300 : 280;
       const availableHeight = screenHeight - reservedSpace;
 
       const rowHeight = screenWidth >= 1280 ? 105 : 88;
