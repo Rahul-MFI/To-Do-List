@@ -14,7 +14,6 @@ import Spinner from "../components/Spinner";
 import TodoApp from "./TodoApp";
 import axiosInstance from "../../middleware/axiosInstance";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import WelcomePage from "./WelcomePage";
 import { useNetwork } from "../components/useNetwork";
 
 const Dashboard = () => {
@@ -35,10 +34,40 @@ const Dashboard = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
 
-  const { online, setOnline, session, setSession } = useNetwork();
+  const { online, setOnline, session, setSession, soundEnabled } = useNetwork();
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
+
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data && event.data.type === 'push-sound') {
+        console.log('Received push-sound message in Dashboard:', event.data);
+        if (soundEnabled) {
+          try {
+            const audio = new Audio('/audio.mp3');
+            audio.volume = 0.5;
+            audio.play().catch(error => {
+              console.error('Error playing notification sound:', error);
+            });
+          } catch (error) {
+            console.error('Error creating audio:', error);
+          }
+        }
+      }
+    };
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleMessage);
+    }
+
+    return () => {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('message', handleMessage);
+      }
+    };
+  }, [soundEnabled]);
+  
 
   useEffect(() => {
     const handleClickOutside = (event) => {

@@ -73,6 +73,35 @@ function SettingsPage() {
     fetchNotificationSubscription();
   }, []);
 
+  // Listen for service worker messages to play notification sounds
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data && event.data.type === 'push-sound') {
+        console.log('Received push-sound message in Settings:', event.data);
+        if (soundEnabled) {
+          try {
+            const audio = new Audio('/audio.mp3');
+            audio.play().catch(error => {
+              console.error('Error playing notification sound:', error);
+            });
+          } catch (error) {
+            console.error('Error creating audio:', error);
+          }
+        }
+      }
+    };
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleMessage);
+    }
+
+    return () => {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('message', handleMessage);
+      }
+    };
+  }, [soundEnabled]);
+
   const handleEnableNotifications = async () => {
     const status = Notification.permission;
     if (status === "granted") {
@@ -130,7 +159,14 @@ function SettingsPage() {
         badge: "/icon.png",
         image: "/icon.png",
       });
-      console.log("✅ Test notification sent and message posted.");
+
+      if (soundEnabled) {
+        const audio = new Audio('/audio.mp3');
+        audio.play().catch(error => {
+          console.error('Error playing notification sound:', error);
+        });
+      }
+      console.log("✅ Test notification sent and sound message posted.");
     } catch (error) {
       console.error("❌ Error showing test notification:", error);
     }
@@ -329,6 +365,7 @@ function SettingsPage() {
                     <button
                       onClick={() => {
                         setSoundEnabled(!soundEnabled);
+                          localStorage.setItem('soundEnabled', !soundEnabled);
                       }}
                       className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 ${
                         soundEnabled ? "bg-yellow-500" : "bg-gray-200"

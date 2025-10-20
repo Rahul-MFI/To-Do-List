@@ -26,13 +26,14 @@ self.addEventListener("install", event => {
             badge: "/icon.png",        
             image: "/icon.png" 
           });
+          console.log("Notification shown successfully");
           const allClients = await self.clients.matchAll({ includeUncontrolled: true });
           for (const client of allClients) {
-            if (client.url.includes("/dashboard")) {
+            if (client.url.includes("/dashboard") || client.url.includes("/settings")) {
               client.postMessage({ type: "push-sound", payload: data });
             }
           }
-          console.log("Notification shown");
+          console.log("Notification shown successfully");
         })()
       );
   });
