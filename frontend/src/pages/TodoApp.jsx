@@ -472,7 +472,7 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
   };
 
   return (
-    <div className="h-auto bg-yellow-50 p-6">
+    <div className="h-full bg-yellow-50 p-6">
       <div className="max-w-6xl mx-auto">
         <div className="bg-white rounded-lg shadow-sm px-6 py-4 mb-6">
           <div className="flex flex-wrap gap-3 justify-between">
@@ -686,8 +686,8 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
                         </h3>
                         <div className="flex flex-wrap items-center gap-4 mt-2">
                           <div className="flex items-center gap-1 text-sm text-gray-500">
-                            <Calendar className="w-4 h-4" />
-                            {getLocalDate(task.deadline)}
+                            <Calendar className={`w-4 h-4 ${new Date(task.deadline) <= Date.now() ? "text-red-500" : "text-gray-500"}`} />
+                            <span className={`${new Date(task.deadline) <= Date.now() ? "text-red-500 font-bold line-through" : "text-gray-500"}`}>{getLocalDate(task.deadline)}</span>
                           </div>
                           <span
                             className={`px-2 py-1 rounded text-sm font-medium ${getPriorityColor(
@@ -698,14 +698,6 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
                             {priorityMapNumber[task.priority][0].toUpperCase() +
                               priorityMapNumber[task.priority].slice(1)}
                           </span>
-                          {new Date(task.deadline) <= Date.now() && (
-                            <span
-                              className={`flex items-center gap-1 px-2 py-1 rounded text-sm text-white font-medium bg-red-500`}
-                            >
-                              <XCircle className="w-4 h-4" />
-                              Deadline
-                            </span>
-                          )}
                         </div>
                       </div>
                     </div>
