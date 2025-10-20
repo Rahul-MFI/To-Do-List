@@ -745,7 +745,7 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
 
         {/* Pagination */}
         {totalTasks > 0 && !isLoading && (
-          <div className="flex justify-center items-center gap-2 mt-6">
+          <div className="flex flex-wrap justify-center items-center gap-2 mt-6">
             <button
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
@@ -862,13 +862,6 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
                 )}
                 <div className="flex gap-3 mt-6">
                   <button
-                    disabled={isLoading2}
-                    onClick={addTask}
-                    className="flex-1 bg-black hover:bg-gray-700 text-white py-2 px-4 xl:text-lg font-semibold rounded-md transition-colors"
-                  >
-                    {isLoading2 ? <Spinner /> : `Add Task`}
-                  </button>
-                  <button
                     onClick={() => {
                       setShowAddModal(false);
                       resetForm();
@@ -876,6 +869,13 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
                     className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 px-4 xl:text-lg font-semibold rounded-md transition-colors"
                   >
                     Cancel
+                  </button>
+                  <button
+                    disabled={isLoading2}
+                    onClick={addTask}
+                    className="flex-1 bg-black hover:bg-gray-700 text-white py-2 px-4 xl:text-lg font-semibold rounded-md transition-colors"
+                  >
+                    {isLoading2 ? <Spinner /> : `Add Task`}
                   </button>
                 </div>
               </div>
@@ -952,13 +952,6 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
                 )}
                 <div className="flex gap-3 mt-6">
                   <button
-                    disabled={isLoading2}
-                    onClick={editTask}
-                    className="flex-1 bg-black hover:bg-gray-700 text-white py-2 px-4 xl:text-lg font-semibold rounded-md transition-colors"
-                  >
-                    {isLoading2 ? <Spinner /> : `Edit Task`}
-                  </button>
-                  <button
                     onClick={() => {
                       setShowEditModal(false);
                       resetForm();
@@ -966,6 +959,13 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
                     className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 px-4 xl:text-lg font-semibold rounded-md transition-colors"
                   >
                     Cancel
+                  </button>
+                  <button
+                    disabled={isLoading2}
+                    onClick={editTask}
+                    className="flex-1 bg-black hover:bg-gray-700 text-white py-2 px-4 xl:text-lg font-semibold rounded-md transition-colors"
+                  >
+                    {isLoading2 ? <Spinner /> : `Edit Task`}
                   </button>
                 </div>
               </div>

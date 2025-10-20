@@ -8,8 +8,10 @@ import {
   Target,
   Lightbulb,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-const WelcomePage = ({onAction}) => {
+const WelcomePage = () => {
+  const navigate = useNavigate();
   const features = [
     {
       icon: <Briefcase className="w-8 h-8 text-yellow-600" />,
@@ -57,6 +59,36 @@ const WelcomePage = ({onAction}) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-amber-100">
+      <header className="p-4 sm:p-6 ">
+        <div className="container mx-auto flex justify-between items-center">
+          <div className="flex items-center">
+            <h1
+              className={`text-2xl sm:text-3xl lg:text-4xl font-bold text-yellow-600 bg-gradient-to-r from-yellow-500 to-amber-500 bg-clip-text`}
+            >
+              <span>TaskSphere</span>
+            </h1>
+          </div>
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            <button
+              onClick={() => {
+                navigate("/login");
+              }}
+              className={`px-2 py-1 lg:px-4 lg:py-2 rounded hover:bg-yellow-600 text-white bg-yellow-500`}
+            >
+              Login
+            </button>
+            <button
+              onClick={() => {
+                navigate("/register");
+              }}
+              className={`px-2 py-1 lg:px-4 lg:py-2 rounded border border-yellow-500 hover:bg-yellow-200 text-yellow-500`}
+            >
+              Sign up
+            </button>
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
       <div className="text-center py-16 px-6">
         <div className="max-w-4xl mx-auto">
@@ -73,15 +105,6 @@ const WelcomePage = ({onAction}) => {
             Your powerful productivity companion for organizing tasks, managing
             projects, and achieving your goals with ease.
           </p>
-
-          {/* CTA Button */}
-          <button
-            onClick={()=> {onAction(true)}}
-            className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-4 px-8 rounded-xl text-lg shadow-lg transform hover:scale-105 transition-all duration-200 hover:shadow-xl"
-          >
-            <Plus className="w-6 h-6 inline-block mr-2" />
-            Create Your First Workspace
-          </button>
         </div>
       </div>
 
@@ -133,6 +156,15 @@ const WelcomePage = ({onAction}) => {
       </div>
     </div>
   );
+};
+
+const SecondaryButton = (children, style, onClickFunction) => {
+  <button
+    onClick={onClickFunction}
+    className={`px-2 py-1 lg:px-3 lg:py-2 rounded ${style}`}
+  >
+    {children}
+  </button>;
 };
 
 export default WelcomePage;

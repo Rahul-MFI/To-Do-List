@@ -5,13 +5,15 @@ import ProtectedRoute from "./ProtectedRoute";
 import Dashboard from "./Dashboard";
 import { NetworkProvider } from "../components/NetworkProvider";
 import SettingsPage from "./Settings";
+import WelcomePage from "./WelcomePage";
 
 function App() {
 
   return (
     <Routes>
       <Route path="/login" element={<AuthPage isLogin={true} />} />
-      <Route path="/" element={<AuthPage isLogin={false} />} />
+      <Route path="/" element={<WelcomePage/>}/>
+      <Route path="/register" element={<AuthPage isLogin={false} />} />
       <Route
         path="/dashboard"
         element={

@@ -4,7 +4,6 @@ import axios from "axios";
 import { Navigate, useNavigate } from "react-router-dom";
 import PrimaryButton from "../components/PrimaryButton";
 import Spinner from "../components/Spinner";
-import subscribeUserToPush from "../components/subscribe";
 
 const AuthPage = ({ isLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -534,7 +533,7 @@ const AuthPage = ({ isLogin }) => {
                     resetError();
                     resetData();
                     isLogin
-                      ? navigate("/", { replace: true })
+                      ? navigate("/register", { replace: true })
                       : navigate("/login", { replace: true });
                   }}
                   className="text-yellow-500 text-sm sm:text-md hover:text-yellow-600 font-medium"

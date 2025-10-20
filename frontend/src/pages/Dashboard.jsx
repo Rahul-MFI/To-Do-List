@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   ClipboardList,
   Menu,
+  Plus,
   Settings,
   Trash2,
   User,
@@ -29,11 +30,11 @@ const Dashboard = () => {
   const dropdownRef = useRef(null);
   const [showWorkspaceModel, setShowWorkspaceModel] = useState(false);
   const [showWorkspaceDeleteModal, setShowWorkspaceDeleteModal] =
-  useState(false);
+    useState(false);
   const [workspaceName, setWorkspaceName] = useState("");
-  
+
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   const { online, setOnline, session, setSession } = useNetwork();
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -46,17 +47,17 @@ const Dashboard = () => {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-  
+
   const navigate = useNavigate();
 
   const handleNavigation = (item) => {
     setCurrentWorkspace(item);
     localStorage.setItem("wid", item.w_id);
     setCurrentPage(1);
-    console.log("navigate to ", item.w_name)
+    console.log("navigate to ", item.w_name);
     navigate(`/dashboard?wid=${item.w_id}`, { replace: true });
     if (window.innerWidth < 768) {
       toggleSidebar();
@@ -65,17 +66,17 @@ const Dashboard = () => {
 
   const handleLogout = async () => {
     try {
-        const registration = await navigator.serviceWorker.getRegistration();
-        let subscription = await registration.pushManager.getSubscription();
-        subscription = JSON.parse(JSON.stringify(subscription));
-        await axiosInstance.post("unsubscribe",  {
-          "endpoint": subscription.endpoint,
-          "expirationTime": null,
-          "keys": {
-              "p256dh": subscription.keys.p256dh,
-              "auth": subscription.keys.auth,
-          },
-        });
+      const registration = await navigator.serviceWorker.getRegistration();
+      let subscription = await registration.pushManager.getSubscription();
+      subscription = JSON.parse(JSON.stringify(subscription));
+      await axiosInstance.post("unsubscribe", {
+        endpoint: subscription.endpoint,
+        expirationTime: null,
+        keys: {
+          p256dh: subscription.keys.p256dh,
+          auth: subscription.keys.auth,
+        },
+      });
     } catch (error) {
       console.error("Error unsubscribing:", error);
     }
@@ -124,14 +125,20 @@ const Dashboard = () => {
         );
         if (selectedWorkspaceWid) {
           setCurrentWorkspace(selectedWorkspaceWid);
-          navigate(`/dashboard?wid=${selectedWorkspaceWid.w_id}`, { replace: true });
+          navigate(`/dashboard?wid=${selectedWorkspaceWid.w_id}`, {
+            replace: true,
+          });
         } else if (selectedWorkspaceStoredWid) {
           setCurrentWorkspace(selectedWorkspaceStoredWid);
-          navigate(`/dashboard?wid=${selectedWorkspaceStoredWid.w_id}`, { replace: true });
+          navigate(`/dashboard?wid=${selectedWorkspaceStoredWid.w_id}`, {
+            replace: true,
+          });
         } else {
           const fallbackWorkspace = menuItems[0];
           setCurrentWorkspace(fallbackWorkspace);
-          navigate(`/dashboard?wid=${fallbackWorkspace.w_id}`, { replace: true });
+          navigate(`/dashboard?wid=${fallbackWorkspace.w_id}`, {
+            replace: true,
+          });
         }
       } catch (err) {
         console.error("Error setting current workspace:", err);
@@ -354,7 +361,7 @@ const Dashboard = () => {
               <div className="px-4 mb-4 xl:mb-8">
                 <button
                   onClick={() => {
-                    handleLogout()
+                    handleLogout();
                   }}
                   className="w-full flex items-center justify-center space-x-2 px-4 py-3 xl:py-3 xl:px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 font-semibold"
                 >
@@ -379,14 +386,20 @@ const Dashboard = () => {
                       {currentWorkspace.w_name}
                       <div className="relative px-4" ref={dropdownRef}>
                         <button
-                          onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                          onClick={() =>
+                            setShowProfileDropdown(!showProfileDropdown)
+                          }
                           className="flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 rounded-full"
                         >
                           <div className="w-10 h-10 bg-yellow-50 rounded-full flex items-center justify-center hover:bg-yellow-100 transition-colors">
                             <User className="w-5 h-5 text-yellow-800" />
                           </div>
                         </button>
-                        {showProfileDropdown && <ProfileDropdown setShowProfileDropdown={setShowProfileDropdown} />}
+                        {showProfileDropdown && (
+                          <ProfileDropdown
+                            setShowProfileDropdown={setShowProfileDropdown}
+                          />
+                        )}
                       </div>
                     </div>
                   </div>
@@ -401,7 +414,32 @@ const Dashboard = () => {
                   setCurrentPage={setCurrentPage}
                 />
               ) : (
-                <WelcomePage onAction={handleCreateWorkspace} />
+                <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-amber-100">
+                  <div className="text-center py-16 px-6">
+                    <div className="max-w-4xl mx-auto">
+                      <h1 className="text-xl xl:text-3xl font-bold text-yellow-600 mb-6">
+                        Create a Workspace
+                      </h1>
+
+                      {/* Subtitle */}
+                      <p className="text-md xl:text-xl text-gray-600 mb-8 mx-auto leading-relaxed">
+                        Increase your productivity by creating new workspace for
+                        managing your tasks.
+                      </p>
+
+                      {/* CTA Button */}
+                      <button
+                        onClick={() => {
+                          handleCreateWorkspace(true);
+                        }}
+                        className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-xl text-lg shadow-lg transform hover:scale-105 transition-all duration-200 hover:shadow-xl"
+                      >
+                        <Plus className="w-6 h-6 inline-block mr-2" />
+                        Create Your First Workspace
+                      </button>
+                    </div>
+                  </div>
+                </div>
               )}
             </main>
           </div>
@@ -448,13 +486,6 @@ const Dashboard = () => {
               </div>
               <div className="flex gap-3 mt-6">
                 <button
-                  disabled={loading2}
-                  onClick={addWorkspace}
-                  className="flex-1 bg-black hover:bg-gray-700 text-white px-4 py-2 xl:text-lg font-semibold rounded-md transition-colors"
-                >
-                  {loading2 ? <Spinner style="inline w-4 h-4" /> : "Create"}
-                </button>
-                <button
                   onClick={() => {
                     setShowWorkspaceModel(false);
                     setWorkspaceError("");
@@ -463,6 +494,13 @@ const Dashboard = () => {
                   className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 xl:text-lg rounded-md font-semibold transition-colors"
                 >
                   Cancel
+                </button>
+                <button
+                  disabled={loading2}
+                  onClick={addWorkspace}
+                  className="flex-1 bg-black hover:bg-gray-700 text-white px-4 py-2 xl:text-lg font-semibold rounded-md transition-colors"
+                >
+                  {loading2 ? <Spinner style="inline w-4 h-4" /> : "Create"}
                 </button>
               </div>
             </div>
@@ -502,13 +540,6 @@ const Dashboard = () => {
               </div>
               <div className="flex gap-3">
                 <button
-                  disabled={loading2}
-                  onClick={deleteWorkspace}
-                  className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 xl:text-lg font-semibold rounded-md transition-colors"
-                >
-                  {loading2 ? <Spinner style="inline w-4 h-4" /> : "Delete"}
-                </button>
-                <button
                   onClick={() => {
                     setShowWorkspaceDeleteModal(false);
                     setWorkspaceError("");
@@ -516,6 +547,13 @@ const Dashboard = () => {
                   className="flex-1 bg-black hover:bg-gray-700 text-white px-4 py-2 xl:text-lg rounded-md font-semibold transition-colors"
                 >
                   Cancel
+                </button>
+                <button
+                  disabled={loading2}
+                  onClick={deleteWorkspace}
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 xl:text-lg font-semibold rounded-md transition-colors"
+                >
+                  {loading2 ? <Spinner style="inline w-4 h-4" /> : "Delete"}
                 </button>
               </div>
             </div>
@@ -605,58 +643,64 @@ const Dashboard = () => {
 
 export default Dashboard;
 
-function ProfileDropdown ({ setShowProfileDropdown }) {
-
+function ProfileDropdown({ setShowProfileDropdown }) {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
 
   useEffect(() => {
     const fetchPersonalInfo = async () => {
-     try {
-      setIsLoading(true)
+      try {
+        setIsLoading(true);
         const response = await axiosInstance.get("auth/profile");
         setUsername(response.data.username);
         setEmail(response.data.email);
-        console.log(response)
-     } catch (error) {
+        console.log(response);
+      } catch (error) {
         console.error("Error fetching personal info:", error);
-     } finally {
-      setIsLoading(false)
-     }
-    }
+      } finally {
+        setIsLoading(false);
+      }
+    };
     fetchPersonalInfo();
   }, []);
 
   return (
-
-  <div className="absolute top-16 right-0 bg-white rounded-lg shadow-lg border border-yellow-200 w-56 z-100">
-    <div className="p-4 w-full flex flex-row justify-center items-center border-b border-yellow-100">
-      {isLoading ? <Spinner style={"text-black"} /> : 
-      (<div className="flex items-center space-x-3">
-        <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center">
-          <User className="w-6 h-6 text-yellow-800" />
-        </div>
-        <div>
-          <h2 className="font-semibold text-black">{username.length > 10 ? username.slice(0,10)+"..." : username}</h2>
-          <p className="text-sm text-black">{email.length > 15 ? email.slice(0,15)+"..." : email}</p>
-        </div>
-      </div>)
-      }
+    <div className="absolute top-16 right-0 bg-white rounded-lg shadow-lg border border-yellow-200 w-56 z-100">
+      <div className="p-4 w-full flex flex-row justify-center items-center border-b border-yellow-100">
+        {isLoading ? (
+          <Spinner style={"text-black"} />
+        ) : (
+          <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center">
+              <User className="w-6 h-6 text-yellow-800" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-black">
+                {username.length > 10
+                  ? username.slice(0, 10) + "..."
+                  : username}
+              </h2>
+              <p className="text-sm text-black">
+                {email.length > 15 ? email.slice(0, 15) + "..." : email}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="p-2">
+        <button
+          onClick={() => {
+            setShowProfileDropdown(false);
+            navigate("/settings");
+          }}
+          className="w-full flex items-center space-x-3 px-3 py-2 text-left hover:bg-yellow-50 rounded-md transition-colors"
+        >
+          <Settings className="w-6 h-6 text-yellow-600" />
+          <span className="text-lg text-black">Settings</span>
+        </button>
+      </div>
     </div>
-    <div className="p-2">
-      <button
-        onClick={() => {
-          setShowProfileDropdown(false);
-          navigate('/settings');
-        }}
-        className="w-full flex items-center space-x-3 px-3 py-2 text-left hover:bg-yellow-50 rounded-md transition-colors"
-      >
-        <Settings className="w-6 h-6 text-yellow-600" />
-        <span className="text-lg text-black">Settings</span>
-      </button>
-    </div>
-  </div>
-  )
+  );
 }
