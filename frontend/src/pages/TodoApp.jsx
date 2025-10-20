@@ -195,7 +195,7 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
       const screenHeight = window.innerHeight;
       const screenWidth = window.innerWidth;
 
-      const reservedSpace = screenWidth >= 1280 ? 300 : 280;
+      const reservedSpace = screenWidth >= 1280 ? 285 : 265;
       const availableHeight = screenHeight - reservedSpace;
 
       const rowHeight = screenWidth >= 1280 ? 105 : 88;
@@ -472,7 +472,7 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
   };
 
   return (
-    <div className="min-h-screen bg-yellow-50 p-6">
+    <div className="h-auto bg-yellow-50 p-6">
       <div className="max-w-6xl mx-auto">
         <div className="bg-white rounded-lg shadow-sm px-6 py-4 mb-6">
           <div className="flex flex-wrap gap-3 justify-between">
