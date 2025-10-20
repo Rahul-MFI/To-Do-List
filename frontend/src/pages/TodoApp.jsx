@@ -635,7 +635,7 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
           )}
         </div>
 
-        {/* Task List */}
+        {/* Task List changed */}
         <div className="bg-white rounded-lg shadow-sm">
           {isLoading ? (
             <div className="flex justify-center items-center h-48">
