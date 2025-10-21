@@ -13,6 +13,7 @@ import {
   ArrowUp,
   ArrowDown,
   XCircle,
+  FlagIcon,
 } from "lucide-react";
 import Spinner from "../components/Spinner";
 import axiosInstance from "../../middleware/axiosInstance";
@@ -195,13 +196,14 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
       const screenHeight = window.innerHeight;
       const screenWidth = window.innerWidth;
 
-      const reservedSpace = screenWidth >= 1280 ? 285 : 265;
+      const reservedSpace = screenWidth >= 1280 ? 144 : 255;
       const availableHeight = screenHeight - reservedSpace;
 
-      const rowHeight = screenWidth >= 1280 ? 105 : 88;
+      const rowHeight = screenWidth >= 1280 ? 133 : 85;
       const rows = Math.floor(availableHeight / rowHeight);
 
       setTaskPerPage(rows > 0 ? rows : 1);
+      //setTaskPerPage(5);
     };
 
     calculateTasksPerPage();
@@ -474,7 +476,7 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
   return (
     <div className="min-h-full bg-yellow-50 p-6">
       <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-lg shadow-sm px-6 py-4 mb-6">
+        <div className="bg-white rounded-lg shadow-sm md:px-6 px-4 md:py-4 py-4 mb-6">
           <div className="flex flex-wrap gap-3 justify-between">
             <div className="flex flex-wrap gap-4 items-center">
               <button
@@ -503,16 +505,16 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
               )}
             </div>
 
-            <div className="flex flex-row justify-center gap-4">
+            <div className="flex flex-row justify-center gap-2 md:gap-4">
               <button
                 onClick={() => setShowAddModal(true)}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-2 text-sm rounded-lg flex items-center gap-2 transition-colors"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-2 md:py-2 md:px-4 text-sm md:text-md rounded-lg flex items-center gap-2 transition-colors"
               >
                 Add Task
               </button>
               <button
                 onClick={clearFilters}
-                className="bg-red-500 hover:bg-red-600 text-white px-2 py-2 text-sm rounded-lg flex items-center gap-2 transition-colors"
+                className="bg-red-500 hover:bg-red-600 text-white px-2 py-2 md:py-2 md:px-4 text-sm md:text-md rounded-lg flex items-center gap-2 transition-colors"
               >
                 Clear Filters
               </button>
@@ -651,49 +653,51 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
               {tasks.map((task) => (
                 <div
                   key={task.t_name}
-                  className={`border-b border-gray-300 p-4 xl:px-6 xl:py-4 hover:bg-gray-50 transition-colors ${
+                  className={`border-b border-gray-300 px-4 py-2 xl:px-6 xl:py-4 hover:bg-gray-50 transition-colors ${
                     task.markCompleted ? "opacity-60" : ""
                   }`}
                 > 
                   <div className="flex flex-col justify-center items-start gap-1 md:gap-2">
-                    <div className="flex flex-row items-center gap-4">
-                      <button
-                        onClick={() =>
-                          toggleTaskCompletion(
-                            task.t_name,
-                            task.markCompleted ? false : true
-                          )
-                        }
-                        className={`w-6 h-6 flex-shrink-0 rounded border-2 flex items-center justify-center transition-colors ${
-                          task.markCompleted
-                            ? "bg-green-500 border-green-500 text-white"
-                            : "border-gray-300 hover:border-green-400"
-                        }`}
-                      >
-                        {task.markCompleted && <Check className="w-4 h-4" />}
-                      </button>
-                      <h3
-                          className={`font-medium ${
+                    <div className="flex flex-row justify-between w-full items-center gap-4">
+                      <div className="flex flex-row items-center gap-2">
+                        <button
+                          onClick={() =>
+                            toggleTaskCompletion(
+                              task.t_name,
+                              task.markCompleted ? false : true
+                            )
+                          }
+                          className={`w-6 h-6 flex-shrink-0 rounded border-2 flex items-center justify-center transition-colors ${
                             task.markCompleted
-                              ? "line-through text-gray-500"
-                              : "text-gray-800"
+                              ? "bg-green-500 border-green-500 text-white"
+                              : "border-gray-300 hover:border-green-400"
                           }`}
                         >
-                          {task.t_name}
-                        </h3>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center justify-between w-full gap-2">
-                      <div className="flex flex-wrap items-center gap-4 mt-2">
-                        <span
-                            className={`px-1 rounded text-sm font-medium ${getPriorityColor(
+                          {task.markCompleted && <Check className="w-4 h-4" />}
+                        </button>
+                        <h3
+                            className={`font-medium ${
+                              task.markCompleted
+                                ? "line-through text-gray-500"
+                                : "text-gray-800"
+                            }`}
+                          >
+                            {task.t_name}
+                          </h3>
+                      </div>
+                      <span
+                            className={`md:p-1 rounded text-sm font-medium ${getPriorityColor(
                               task.priority
                             )}`}
                           >
                             <Flag className="w-4 h-4 inline" />
 
                           </span>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center justify-between w-full gap-2">
+                      <div className="flex flex-wrap items-center gap-4 mt-2">
                         <div className="flex items-center gap-1 text-sm text-gray-500">
                           <Calendar className={`w-4 h-4 ${new Date(task.deadline) <= Date.now() ? "text-red-500" : "text-gray-500"}`} />
                           <span className={`${new Date(task.deadline) <= Date.now() ? "text-red-500 font-bold line-through" : "text-gray-500"}`}>{getLocalDate(task.deadline)}</span>
@@ -719,7 +723,7 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
                           onClick={() => {
                             deleteTask(task.t_name);
                           }}
-                          className={`p-2 bg-red-200 text-red-600 rounded transition-colors hover:bg-red-300`}
+                          className={`p-2 bg-red-500 text-white rounded transition-colors hover:bg-red-600`}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -734,7 +738,7 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
 
         {/* Pagination */}
         {totalTasks > 0 && !isLoading && (
-          <div className="flex flex-wrap justify-center items-center gap-2 py-4">
+          <div className="flex flex-wrap justify-center items-center gap-2 pt-4">
             <button
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
