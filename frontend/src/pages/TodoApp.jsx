@@ -154,7 +154,7 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
         cleanFilters.priority = priorityMap[filters.priority];
       }
 
-      if (filters.crossedDeadline && filters.crossedDeadline !== "false"){
+      if (filters.crossedDeadline && filters.crossedDeadline !== "false") {
         cleanFilters.dueBefore = new Date().toISOString()
       }
 
@@ -196,10 +196,10 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
       const screenHeight = window.innerHeight;
       const screenWidth = window.innerWidth;
 
-      const reservedSpace = screenWidth >= 1280 ? 144 : 255;
+      const reservedSpace = screenWidth >= 640 ? 260 : 282;
       const availableHeight = screenHeight - reservedSpace;
 
-      const rowHeight = screenWidth >= 1280 ? 133 : 85;
+      const rowHeight = screenWidth >= 640 ? 100 : 78;
       const rows = Math.floor(availableHeight / rowHeight);
 
       setTaskPerPage(rows > 0 ? rows : 1);
@@ -484,7 +484,7 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
                 className={`flex items-center gap-2 px-2 py-2 border border-gray-300 rounded-md  transition-colors ${"bg-blue-500 hover:bg-blue-600 text-white"}`}
               >
                 <Filter className="w-4 h-4" />
-              
+
               </button>
 
               {/* Active filter count */}
@@ -653,11 +653,10 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
               {tasks.map((task) => (
                 <div
                   key={task.t_name}
-                  className={`border-b border-gray-300 px-4 py-2 xl:px-6 xl:py-4 hover:bg-gray-50 transition-colors ${
-                    task.markCompleted ? "opacity-60" : ""
-                  }`}
-                > 
-                  <div className="flex flex-col justify-center items-start gap-1 md:gap-2">
+                  className={`border-b border-gray-300 px-4 py-2 sm:px-6 sm:py-4 hover:bg-gray-50 transition-colors ${task.markCompleted ? "opacity-60" : ""
+                    }`}
+                >
+                  <div className="flex flex-col justify-center items-start gap-1 sm:gap-2">
                     <div className="flex flex-row justify-between w-full items-center gap-4">
                       <div className="flex flex-row items-center gap-2">
                         <button
@@ -667,32 +666,30 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
                               task.markCompleted ? false : true
                             )
                           }
-                          className={`w-6 h-6 flex-shrink-0 rounded border-2 flex items-center justify-center transition-colors ${
-                            task.markCompleted
+                          className={`sm:w-6 sm:h-6 w-5 h-5 flex-shrink-0 rounded border-2 flex items-center justify-center transition-colors ${task.markCompleted
                               ? "bg-green-500 border-green-500 text-white"
                               : "border-gray-300 hover:border-green-400"
-                          }`}
+                            }`}
                         >
                           {task.markCompleted && <Check className="w-4 h-4" />}
                         </button>
                         <h3
-                            className={`font-medium ${
-                              task.markCompleted
-                                ? "line-through text-gray-500"
-                                : "text-gray-800"
+                          className={`font-medium ${task.markCompleted
+                              ? "line-through text-gray-500"
+                              : "text-gray-800"
                             }`}
-                          >
-                            {task.t_name}
-                          </h3>
+                        >
+                          {task.t_name}
+                        </h3>
                       </div>
                       <span
-                            className={`md:p-1 rounded text-sm font-medium ${getPriorityColor(
-                              task.priority
-                            )}`}
-                          >
-                            <Flag className="w-4 h-4 inline" />
+                        className={`sm:p-1 rounded text-sm font-medium ${getPriorityColor(
+                          task.priority
+                        )}`}
+                      >
+                        <Flag className="w-4 h-4 inline" />
 
-                          </span>
+                      </span>
                     </div>
 
                     {/* Actions */}
@@ -710,11 +707,10 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
                             openEditModal(task);
                             setcurrentTaskName(task.t_name);
                           }}
-                          className={`p-2 bg-blue-200 text-blue-600 rounded transition-colors ${
-                            task.markCompleted
+                          className={`p-2 bg-blue-200 text-blue-600 rounded transition-colors ${task.markCompleted
                               ? "cursor-not-allowed"
                               : "hover:bg-blue-300"
-                          }`}
+                            }`}
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
@@ -738,94 +734,93 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
 
         {/* Pagination */}
         {totalTasks > 0 && !isLoading && (
-          <div className="flex flex-wrap justify-center items-center gap-2 pt-4">
-            <button
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className={`px-3 py-2 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
-                currentPage === 1
-                  ? ""
-                  : "bg-blue-500 text-white hover:bg-blue-600"
-              }`}
-            >
-              Previous
-            </button>
+          <div className="flex flex-col sm:flex-row justify-center items-center pt-4 gap-2">
+            <div className="flex flex-wrap justify-center items-center gap-2">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`px-3 py-2 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed ${currentPage === 1
+                    ? ""
+                    : "bg-blue-500 text-white hover:bg-blue-600"
+                  }`}
+              >
+                Previous
+              </button>
 
-            {(() => {
-              const buttons = [];
- 
-              // Always show first page if it's not the current page
-              if (currentPage !== 1) {
+              {(() => {
+                const buttons = [];
+
+                // Always show first page if it's not the current page
+                if (currentPage !== 1) {
+                  buttons.push(
+                    <button
+                      key={1}
+                      onClick={() => setCurrentPage(1)}
+                      className="px-3 py-2 border rounded-md text-sm transition-colors border-gray-300 hover:bg-blue-100"
+                    >
+                      1
+                    </button>
+                  );
+
+                  // Add dots after first page if there's a gap
+                  if (currentPage > 2) {
+                    buttons.push(
+                      <span key="dots-left" className="px-2 text-gray-500">
+                        ...
+                      </span>
+                    );
+                  }
+                }
+
+                // Always show current page
                 buttons.push(
                   <button
-                    key={1}
-                    onClick={() => setCurrentPage(1)}
-                    className="px-3 py-2 border rounded-md text-sm transition-colors border-gray-300 hover:bg-blue-100"
+                    key={currentPage}
+                    onClick={() => setCurrentPage(currentPage)}
+                    className="px-3 py-2 border rounded-md text-sm transition-colors bg-blue-500 text-white border-blue-500"
                   >
-                    1
+                    {currentPage}
                   </button>
                 );
 
-                // Add dots after first page if there's a gap
-                if (currentPage > 2) {
+                // Always show last page if it's not the current page and there's more than 1 page
+                if (currentPage !== totalPages && totalPages > 1) {
+                  // Add dots before last page if there's a gap
+                  if (currentPage < totalPages - 1) {
+                    buttons.push(
+                      <span key="dots-right" className="px-2 text-gray-500">
+                        ...
+                      </span>
+                    );
+                  }
+
                   buttons.push(
-                    <span key="dots-left" className="px-2 text-gray-500">
-                      ...
-                    </span>
-                  );
-                }
-              }
- 
-              // Always show current page
-              buttons.push(
-                <button
-                  key={currentPage}
-                  onClick={() => setCurrentPage(currentPage)}
-                  className="px-3 py-2 border rounded-md text-sm transition-colors bg-blue-500 text-white border-blue-500"
-                >
-                  {currentPage}
-                </button>
-              );
- 
-              // Always show last page if it's not the current page and there's more than 1 page
-              if (currentPage !== totalPages && totalPages > 1) {
-                // Add dots before last page if there's a gap
-                if (currentPage < totalPages - 1) {
-                  buttons.push(
-                    <span key="dots-right" className="px-2 text-gray-500">
-                      ...
-                    </span>
+                    <button
+                      key={totalPages}
+                      onClick={() => setCurrentPage(totalPages)}
+                      className="px-3 py-2 border rounded-md text-sm transition-colors border-gray-300 hover:bg-blue-100"
+                    >
+                      {totalPages}
+                    </button>
                   );
                 }
 
-                buttons.push(
-                  <button
-                    key={totalPages}
-                    onClick={() => setCurrentPage(totalPages)}
-                    className="px-3 py-2 border rounded-md text-sm transition-colors border-gray-300 hover:bg-blue-100"
-                  >
-                    {totalPages}
-                  </button>
-                );
-              }
- 
-              return buttons;
-            })()}
+                return buttons;
+              })()}
 
-            <button
-              onClick={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
-              disabled={currentPage === totalPages}
-              className={`px-3 py-2 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
-                currentPage === totalPages
-                  ? ""
-                  : "bg-blue-500 text-white hover:bg-blue-600"
-              }`}
-            >
-              Next
-            </button>
-
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className={`px-3 py-2 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed ${currentPage === totalPages
+                    ? ""
+                    : "bg-blue-500 text-white hover:bg-blue-600"
+                  }`}
+              >
+                Next
+              </button>
+            </div>
             <span className="text-sm text-gray-600 ml-4">
               Showing {(currentPage - 1) * tasksPerPage + 1}-
               {Math.min(currentPage * tasksPerPage, totalTasks)} of {totalTasks}{" "}
