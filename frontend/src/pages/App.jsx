@@ -28,9 +28,7 @@ function App() {
         path="/settings"
         element={
           <NetworkProvider>
-            <ProtectedRoute>
-              <SettingsPage />
-            </ProtectedRoute>
+            <SettingsPage />
           </NetworkProvider>
         }
       />

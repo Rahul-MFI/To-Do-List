@@ -479,9 +479,9 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
             <div className="flex flex-wrap gap-4 items-center">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md  transition-colors ${"bg-blue-500 hover:bg-blue-600 text-white"}`}
+                className={`flex items-center gap-2 px-2 py-2 border border-gray-300 rounded-md  transition-colors ${"bg-blue-500 hover:bg-blue-600 text-white"}`}
               >
-                <Filter className="w-5 h-5" />
+                <Filter className="w-4 h-4" />
               
               </button>
 
@@ -506,13 +506,13 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
             <div className="flex flex-row justify-center gap-4">
               <button
                 onClick={() => setShowAddModal(true)}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-2 text-sm rounded-lg flex items-center gap-2 transition-colors"
               >
                 Add Task
               </button>
               <button
                 onClick={clearFilters}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                className="bg-red-500 hover:bg-red-600 text-white px-2 py-2 text-sm rounded-lg flex items-center gap-2 transition-colors"
               >
                 Clear Filters
               </button>

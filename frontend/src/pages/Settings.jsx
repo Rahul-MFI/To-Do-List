@@ -30,11 +30,37 @@ function SettingsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoading2, setIsLoading2] = useState(false);
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchNotificationPermission = async () => {
       const status = Notification.permission;
       setPermissionStatus(status);
+    };
+
+    const checkAuth = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setSession(false);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await axiosInstance.get("auth/verify");
+        if (response.status === 200) {
+          setLoading(false);
+        } else {
+          setSession(false);
+        }
+      } catch (err) {
+        if (err.response) {
+          setSession(false);
+        }
+        console.error("Auth check failed:", err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     const fetchNotificationSubscription = async () => {
@@ -68,7 +94,7 @@ function SettingsPage() {
         setIsLoading(false);
       }
     };
-
+    checkAuth();
     fetchNotificationPermission();
     fetchNotificationSubscription();
   }, []);
@@ -232,6 +258,14 @@ function SettingsPage() {
       }
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen w-screen">
+        <Spinner />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -441,7 +475,7 @@ function SettingsPage() {
                       setSession(true);
                       localStorage.removeItem("token");
                       localStorage.removeItem("wid");
-                      navigate("/home", { replace: true });
+                      navigate("/", { replace: true });
                     }}
                     className="w-full flex items-center justify-center space-x-2 px-4 py-3 xl:py-3 xl:px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 font-semibold"
                   >

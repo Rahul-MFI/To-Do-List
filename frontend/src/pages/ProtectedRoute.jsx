@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import axiosInstance from "../../middleware/axiosInstance";
 import Spinner from "../components/Spinner";
 import { useNetwork } from "../components/useNetwork";
+import WelcomePage from "./WelcomePage";
 
 function ProtectedRoute({ children }) {
   const [loading, setLoading] = useState(true);
-  const { setSession} = useNetwork();
+  const { session, setSession} = useNetwork();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -44,7 +45,7 @@ function ProtectedRoute({ children }) {
     );
   }
 
-  return <>{children}</>;
+  return (!session ? <WelcomePage/> : children);
 }
 
 export default ProtectedRoute;
