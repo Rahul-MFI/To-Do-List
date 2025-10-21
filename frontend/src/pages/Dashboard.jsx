@@ -333,9 +333,9 @@ const Dashboard = () => {
                       <span>+ Create Workspace</span>
                     </button>
                   </div>
-                  <div className="border-b border-yellow-300 mx-4 mb-2"></div>
+                  <div className="border-b border-yellow-700 mx-4 mb-2"></div>
                   <div className="flex-1 overflow-y-auto">
-                    <ul className="space-y-2 px-4">
+                    <ul className=" px-4">
                       {menuItems.length === 0 && (
                         <div className="w-full h-full flex justify-center items-center">
                           <ClipboardList
@@ -350,7 +350,7 @@ const Dashboard = () => {
                       {menuItems.map((item) => {
                         const isActive = currentWorkspace.w_id === item.w_id;
                         return (
-                          <li className="divide-y " key={item.w_id}>
+                          <li className="" key={item.w_id}>
                             <div
                               className={`flex flex-row justify-between items-center px-4 rounded-lg ${
                                 isActive
@@ -380,6 +380,7 @@ const Dashboard = () => {
                                 </button>
                               )}
                             </div>
+                            <div className="border-b border-yellow-300 mx-4 mb-2"></div>
                           </li>
                         );
                       })}

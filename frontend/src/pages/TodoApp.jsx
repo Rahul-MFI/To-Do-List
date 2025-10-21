@@ -651,7 +651,7 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
               {tasks.map((task) => (
                 <div
                   key={task.t_name}
-                  className={`border-b border-gray-100 p-4 xl:p-6 hover:bg-gray-50 transition-colors ${
+                  className={`border-b border-gray-300 p-4 xl:p-6 hover:bg-gray-50 transition-colors ${
                     task.markCompleted ? "opacity-60" : ""
                   }`}
                 >
@@ -737,7 +737,7 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
 
         {/* Pagination */}
         {totalTasks > 0 && !isLoading && (
-          <div className="flex flex-wrap justify-center items-center gap-2 mt-6">
+          <div className="flex flex-wrap justify-center items-center gap-2 py-4">
             <button
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
@@ -750,19 +750,66 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
               Previous
             </button>
 
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`px-3 py-2 border rounded-md text-sm transition-colors ${
-                  currentPage === page
-                    ? "bg-blue-500 text-white border-blue-500"
-                    : "border-gray-300 hover:bg-blue-100"
-                }`}
-              >
-                {page}
-              </button>
-            ))}
+            {(() => {
+              const buttons = [];
+ 
+              // Always show first page if it's not the current page
+              if (currentPage !== 1) {
+                buttons.push(
+                  <button
+                    key={1}
+                    onClick={() => setCurrentPage(1)}
+                    className="px-3 py-2 border rounded-md text-sm transition-colors border-gray-300 hover:bg-blue-100"
+                  >
+                    1
+                  </button>
+                );
+
+                // Add dots after first page if there's a gap
+                if (currentPage > 2) {
+                  buttons.push(
+                    <span key="dots-left" className="px-2 text-gray-500">
+                      ...
+                    </span>
+                  );
+                }
+              }
+ 
+              // Always show current page
+              buttons.push(
+                <button
+                  key={currentPage}
+                  onClick={() => setCurrentPage(currentPage)}
+                  className="px-3 py-2 border rounded-md text-sm transition-colors bg-blue-500 text-white border-blue-500"
+                >
+                  {currentPage}
+                </button>
+              );
+ 
+              // Always show last page if it's not the current page and there's more than 1 page
+              if (currentPage !== totalPages && totalPages > 1) {
+                // Add dots before last page if there's a gap
+                if (currentPage < totalPages - 1) {
+                  buttons.push(
+                    <span key="dots-right" className="px-2 text-gray-500">
+                      ...
+                    </span>
+                  );
+                }
+
+                buttons.push(
+                  <button
+                    key={totalPages}
+                    onClick={() => setCurrentPage(totalPages)}
+                    className="px-3 py-2 border rounded-md text-sm transition-colors border-gray-300 hover:bg-blue-100"
+                  >
+                    {totalPages}
+                  </button>
+                );
+              }
+ 
+              return buttons;
+            })()}
 
             <button
               onClick={() =>
