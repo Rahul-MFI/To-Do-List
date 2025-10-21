@@ -69,32 +69,18 @@ func (db *DB) InitializeTables() error {
 			CONSTRAINT fk_subscription_user FOREIGN KEY (u_id) REFERENCES users(u_id) ON DELETE CASCADE
 		);`,
 
-		`CREATE TABLE IF NOT EXISTS table_schedule (
-			ts_id INT AUTO_INCREMENT PRIMARY KEY,
-			u_id INT NOT NULL,
-			title VARCHAR(255) NOT NULL,
-			message TEXT NOT NULL,
-			deadline DATETIME NOT NULL,
-			duration INT NOT NULL,
+		`CREATE TABLE IF NOT EXISTS notifications (
+			n_id INT AUTO_INCREMENT PRIMARY KEY,
 			t_id INT NOT NULL,
-			CONSTRAINT fk_schedule_user FOREIGN KEY (u_id) REFERENCES users(u_id) ON DELETE CASCADE,
-			CONSTRAINT fk_user_task FOREIGN KEY (t_id) REFERENCES task(t_id) ON DELETE CASCADE
-		);`,
-
-		`CREATE TABLE IF NOT EXISTS notification_deliveries (
-			nd_id INT AUTO_INCREMENT PRIMARY KEY,
-			ts_id INT NOT NULL,
 			s_id INT NOT NULL,
-			scheduled_for DATETIME NOT NULL,
+			duration INT NOT NULL,
 			sent_at DATETIME DEFAULT NULL,
-			status ENUM('sent', 'failed'),
-			failure_reason TEXT,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			status ENUM("sent", "failed", "pending") DEFAULT "pending",
+			scheduled_at DATETIME NOT NULL,
 
-			CONSTRAINT fk_delivery_schedule FOREIGN KEY (ts_id) REFERENCES table_schedule(ts_id) ON DELETE CASCADE,
-			CONSTRAINT fk_delivery_subscription FOREIGN KEY (s_id) REFERENCES subscriptions(s_id) ON DELETE CASCADE,
-
-			UNIQUE KEY uniq_schedule_subscription (ts_id, s_id)
+			CONSTRAINT fk_task FOREIGN KEY (t_id) REFERENCES task(t_id) ON DELETE CASCADE,
+			CONSTRAINT fk_subscription FOREIGN KEY (s_id) REFERENCES subscriptions(s_id) ON DELETE CASCADE,
+			UNIQUE KEY uniq_notification (t_id, s_id, duration)
 		);`,
 	}
 

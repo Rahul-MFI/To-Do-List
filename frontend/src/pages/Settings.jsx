@@ -281,7 +281,7 @@ function SettingsPage() {
                 <div className="flex space-x-4">
                   <button
                     onClick={() => {
-                      navigate("/dashboard");
+                      navigate("/");
                     }}
                     className="text-white hover:text-yellow-800 font-medium"
                   >
