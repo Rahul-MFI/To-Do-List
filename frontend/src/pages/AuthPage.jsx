@@ -250,7 +250,7 @@ const AuthPage = ({ isLogin }) => {
         addLocalStorage(token);
         resetData();
         setSubmitError("");
-        navigate("/dashboard", { replace: true });
+        navigate("/", { replace: true });
       }
     } catch (err) {
       if (err.response) {
@@ -291,7 +291,7 @@ const AuthPage = ({ isLogin }) => {
         const token = response.data.token;
         addLocalStorage(token);
         resetData();
-        navigate("/dashboard", { replace: true });
+        navigate("/", { replace: true });
       }
     } catch (err) {
       if (err.response) {

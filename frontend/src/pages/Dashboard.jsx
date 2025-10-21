@@ -87,7 +87,7 @@ const Dashboard = () => {
     localStorage.setItem("wid", item.w_id);
     setCurrentPage(1);
     console.log("navigate to ", item.w_name);
-    navigate(`/dashboard?wid=${item.w_id}`, { replace: true });
+    navigate(`/?wid=${item.w_id}`, { replace: true });
     if (window.innerWidth < 768) {
       toggleSidebar();
     }
@@ -142,7 +142,7 @@ const Dashboard = () => {
     const fetchcurrentWorkspaceId = () => {
       try {
         if (menuItems.length === 0) {
-          navigate(`/dashboard`, { replace: true });
+          navigate(`/`, { replace: true });
           return;
         }
         const storedWid = localStorage.getItem("wid");
@@ -154,18 +154,18 @@ const Dashboard = () => {
         );
         if (selectedWorkspaceWid) {
           setCurrentWorkspace(selectedWorkspaceWid);
-          navigate(`/dashboard?wid=${selectedWorkspaceWid.w_id}`, {
+          navigate(`/?wid=${selectedWorkspaceWid.w_id}`, {
             replace: true,
           });
         } else if (selectedWorkspaceStoredWid) {
           setCurrentWorkspace(selectedWorkspaceStoredWid);
-          navigate(`/dashboard?wid=${selectedWorkspaceStoredWid.w_id}`, {
+          navigate(`/?wid=${selectedWorkspaceStoredWid.w_id}`, {
             replace: true,
           });
         } else {
           const fallbackWorkspace = menuItems[0];
           setCurrentWorkspace(fallbackWorkspace);
-          navigate(`/dashboard?wid=${fallbackWorkspace.w_id}`, {
+          navigate(`/?wid=${fallbackWorkspace.w_id}`, {
             replace: true,
           });
         }
@@ -203,7 +203,7 @@ const Dashboard = () => {
         if (window.innerWidth < 768) {
           toggleSidebar();
         }
-        window.location.replace(`/dashboard?wid=${new_wid}`);
+        window.location.replace(`/?wid=${new_wid}`);
       } else {
         setWorkspaceError("Failed to create workspace. Please try again.");
       }
@@ -250,12 +250,12 @@ const Dashboard = () => {
           const nextWorkspace = updatedMenu[0];
           setCurrentWorkspace(nextWorkspace);
           localStorage.setItem("wid", nextWorkspace.w_id);
-          navigate(`/dashboard?wid=${nextWorkspace.w_id}`, { replace: true });
+          navigate(`/?wid=${nextWorkspace.w_id}`, { replace: true });
           setCurrentPage(1);
         } else {
           setCurrentWorkspace({});
           localStorage.removeItem("wid");
-          navigate(`/dashboard`, { replace: true });
+          navigate(`/`, { replace: true });
         }
       } else {
         setWorkspaceError("Failed to delete workspace. Please try again.");
@@ -657,7 +657,7 @@ const Dashboard = () => {
                   setSession(true);
                   localStorage.removeItem("token");
                   localStorage.removeItem("wid");
-                  navigate("/login", { replace: true });
+                  navigate("/home", { replace: true });
                 }}
                 className="w-full flex items-center justify-center space-x-2 px-4 py-3 xl:py-3 xl:px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 font-semibold"
               >

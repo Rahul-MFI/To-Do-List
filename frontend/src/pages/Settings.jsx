@@ -441,7 +441,7 @@ function SettingsPage() {
                       setSession(true);
                       localStorage.removeItem("token");
                       localStorage.removeItem("wid");
-                      navigate("/login", { replace: true });
+                      navigate("/home", { replace: true });
                     }}
                     className="w-full flex items-center justify-center space-x-2 px-4 py-3 xl:py-3 xl:px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 font-semibold"
                   >

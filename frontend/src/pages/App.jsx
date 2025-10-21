@@ -12,10 +12,10 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<AuthPage isLogin={true} />} />
-      <Route path="/" element={<WelcomePage/>}/>
+      <Route path="/home" element={<WelcomePage/>}/>
       <Route path="/register" element={<AuthPage isLogin={false} />} />
       <Route
-        path="/dashboard"
+        path="/"
         element={
           <NetworkProvider>
             <ProtectedRoute>
