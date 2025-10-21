@@ -29,7 +29,7 @@ self.addEventListener("install", event => {
           console.log("Notification shown successfully");
           const allClients = await self.clients.matchAll({ includeUncontrolled: true });
           for (const client of allClients) {
-            if (client.url.includes("/dashboard") || client.url.includes("/settings")) {
+            if (client.url.includes("/") || client.url.includes("/settings")) {
               client.postMessage({ type: "push-sound", payload: data });
             }
           }
@@ -44,7 +44,7 @@ self.addEventListener("notificationclick", event => {
 
   event.notification.close();
 
-  const targetUrl = "/dashboard";
+  const targetUrl = "/";
 
   event.waitUntil(
     (async () => {
