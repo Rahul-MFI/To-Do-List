@@ -472,17 +472,17 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
   };
 
   return (
-    <div className="h-full bg-yellow-50 p-6">
+    <div className="min-h-full bg-yellow-50 p-6">
       <div className="max-w-6xl mx-auto">
         <div className="bg-white rounded-lg shadow-sm px-6 py-4 mb-6">
           <div className="flex flex-wrap gap-3 justify-between">
             <div className="flex flex-wrap gap-4 items-center">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center gap-2 px-3 py-1 border border-gray-300 rounded-md  transition-colors ${"bg-blue-500 hover:bg-blue-600 text-white"}`}
+                className={`flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md  transition-colors ${"bg-blue-500 hover:bg-blue-600 text-white"}`}
               >
-                <Filter className="w-4 h-4" />
-                Filters
+                <Filter className="w-5 h-5" />
+              
               </button>
 
               {/* Active filter count */}
@@ -651,12 +651,12 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
               {tasks.map((task) => (
                 <div
                   key={task.t_name}
-                  className={`border-b border-gray-300 p-4 xl:p-6 hover:bg-gray-50 transition-colors ${
+                  className={`border-b border-gray-300 p-4 xl:px-6 xl:py-4 hover:bg-gray-50 transition-colors ${
                     task.markCompleted ? "opacity-60" : ""
                   }`}
-                >
-                  <div className="flex items-center gap-2 justify-between">
-                    <div className="flex items-center gap-4 flex-1">
+                > 
+                  <div className="flex flex-col justify-center items-start gap-1 md:gap-2">
+                    <div className="flex flex-row items-center gap-4">
                       <button
                         onClick={() =>
                           toggleTaskCompletion(
@@ -664,7 +664,7 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
                             task.markCompleted ? false : true
                           )
                         }
-                        className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${
+                        className={`w-6 h-6 flex-shrink-0 rounded border-2 flex items-center justify-center transition-colors ${
                           task.markCompleted
                             ? "bg-green-500 border-green-500 text-white"
                             : "border-gray-300 hover:border-green-400"
@@ -672,10 +672,7 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
                       >
                         {task.markCompleted && <Check className="w-4 h-4" />}
                       </button>
-
-                      {/* Task details */}
-                      <div className="flex-1 ">
-                        <h3
+                      <h3
                           className={`font-medium ${
                             task.markCompleted
                               ? "line-through text-gray-500"
@@ -684,49 +681,49 @@ const TodoApp = ({ workspaceName, currentPage, setCurrentPage }) => {
                         >
                           {task.t_name}
                         </h3>
-                        <div className="flex flex-wrap items-center gap-4 mt-2">
-                          <div className="flex items-center gap-1 text-sm text-gray-500">
-                            <Calendar className={`w-4 h-4 ${new Date(task.deadline) <= Date.now() ? "text-red-500" : "text-gray-500"}`} />
-                            <span className={`${new Date(task.deadline) <= Date.now() ? "text-red-500 font-bold line-through" : "text-gray-500"}`}>{getLocalDate(task.deadline)}</span>
-                          </div>
-                          <span
-                            className={`px-2 py-1 rounded text-sm font-medium ${getPriorityColor(
-                              task.priority
-                            )}`}
-                          >
-                            <Flag className="w-4 h-4 inline mr-1" />
-                            {priorityMapNumber[task.priority][0].toUpperCase() +
-                              priorityMapNumber[task.priority].slice(1)}
-                          </span>
-                        </div>
-                      </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-2">
-                      <button
-                        disabled={task.markCompleted}
-                        onClick={() => {
-                          openEditModal(task);
-                          setcurrentTaskName(task.t_name);
-                        }}
-                        className={`p-2 bg-blue-200 text-blue-600 rounded transition-colors ${
-                          task.markCompleted
-                            ? "cursor-not-allowed"
-                            : "hover:bg-blue-300"
-                        }`}
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
+                    <div className="flex items-center justify-between w-full gap-2">
+                      <div className="flex flex-wrap items-center gap-4 mt-2">
+                        <span
+                            className={`px-1 rounded text-sm font-medium ${getPriorityColor(
+                              task.priority
+                            )}`}
+                          >
+                            <Flag className="w-4 h-4 inline" />
 
-                      <button
-                        onClick={() => {
-                          deleteTask(task.t_name);
-                        }}
-                        className={`p-2 bg-red-200 text-red-600 rounded transition-colors hover:bg-red-300`}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                          </span>
+                        <div className="flex items-center gap-1 text-sm text-gray-500">
+                          <Calendar className={`w-4 h-4 ${new Date(task.deadline) <= Date.now() ? "text-red-500" : "text-gray-500"}`} />
+                          <span className={`${new Date(task.deadline) <= Date.now() ? "text-red-500 font-bold line-through" : "text-gray-500"}`}>{getLocalDate(task.deadline)}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          disabled={task.markCompleted}
+                          onClick={() => {
+                            openEditModal(task);
+                            setcurrentTaskName(task.t_name);
+                          }}
+                          className={`p-2 bg-blue-200 text-blue-600 rounded transition-colors ${
+                            task.markCompleted
+                              ? "cursor-not-allowed"
+                              : "hover:bg-blue-300"
+                          }`}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            deleteTask(task.t_name);
+                          }}
+                          className={`p-2 bg-red-200 text-red-600 rounded transition-colors hover:bg-red-300`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
