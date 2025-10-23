@@ -77,11 +77,160 @@ func (db *DB) InitializeTables() error {
 			sent_at DATETIME DEFAULT NULL,
 			status ENUM("sent", "failed", "pending") DEFAULT "pending",
 			scheduled_at DATETIME NOT NULL,
-
+			title VARCHAR(255) NOT NULL,
+			message VARCHAR(255) NOT NULL,
 			CONSTRAINT fk_task FOREIGN KEY (t_id) REFERENCES task(t_id) ON DELETE CASCADE,
 			CONSTRAINT fk_subscription FOREIGN KEY (s_id) REFERENCES subscriptions(s_id) ON DELETE CASCADE,
 			UNIQUE KEY uniq_notification (t_id, s_id, duration)
 		);`,
+
+		`CREATE TRIGGER IF NOT EXISTS after_task_insert
+			AFTER INSERT ON task
+			FOR EACH ROW
+			BEGIN
+				DECLARE duration1 INT DEFAULT 10; 
+				DECLARE duration2 INT DEFAULT 60;
+				DECLARE duration3 INT DEFAULT 180; 
+
+				-- Insert 3 notifications for the new task
+				INSERT INTO notifications(t_id, s_id, duration, scheduled_at, title, message, status)
+				SELECT 
+					NEW.t_id, 
+					s.s_id, 
+					duration1, 
+					DATE_SUB(NEW.deadline, INTERVAL duration1 MINUTE), 
+					"Task reminder, Rush Hour", 
+					'Hurry up! You have 10 minutes to finish the task.',
+					CASE
+                        WHEN TIMESTAMPDIFF(MINUTE, NOW(), NEW.deadline) < duration1 THEN 'sent'
+                        ELSE 'pending'
+                    END
+				FROM subscriptions s
+				WHERE s.u_id = (SELECT w.u_id FROM workspace w WHERE w.w_id = NEW.w_id) AND s.active = TRUE;
+
+				INSERT INTO notifications(t_id, s_id, duration, scheduled_at, title, message, status)
+				SELECT 
+					NEW.t_id, 
+					s.s_id, 
+					duration2, 
+					DATE_SUB(NEW.deadline, INTERVAL duration2 MINUTE), 
+					"Task reminder, Perfect Time", 
+					'Great! You have 1 hour to finish the task.',
+					CASE
+                        WHEN TIMESTAMPDIFF(MINUTE, NOW(), NEW.deadline) < duration2 THEN 'sent'
+                        ELSE 'pending'
+                    END
+				FROM subscriptions s
+				WHERE s.u_id = (SELECT w.u_id FROM workspace w WHERE w.w_id = NEW.w_id) AND s.active = TRUE;
+
+				INSERT INTO notifications(t_id, s_id, duration, scheduled_at, title, message, status)
+				SELECT 
+					NEW.t_id, 
+					s.s_id, 
+					duration3, 
+					DATE_SUB(NEW.deadline, INTERVAL duration3 MINUTE), 
+					"Task reminder, Chill", 
+					'Reminder! You have 3 hours to finish the task.',
+					CASE
+                        WHEN TIMESTAMPDIFF(MINUTE, NOW(), NEW.deadline) < duration3 THEN 'sent'
+                        ELSE 'pending'
+                    END
+				FROM subscriptions s
+				WHERE s.u_id = (SELECT w.u_id FROM workspace w WHERE w.w_id = NEW.w_id) AND s.active = TRUE;
+			END;`,
+
+		`CREATE TRIGGER IF NOT EXISTS after_task_update
+				AFTER UPDATE ON task
+				FOR EACH ROW
+				BEGIN
+					DECLARE duration1 INT DEFAULT 10; 
+					DECLARE duration2 INT DEFAULT 60;
+					DECLARE duration3 INT DEFAULT 180; 
+
+					IF NEW.deadline <> OLD.deadline THEN
+						UPDATE notifications n
+						SET 
+							scheduled_at = DATE_SUB(NEW.deadline, INTERVAL duration1 MINUTE),
+							status = CASE
+								WHEN TIMESTAMPDIFF(MINUTE, NOW(), NEW.deadline) < duration1 THEN 'sent'
+								ELSE 'pending'
+							END
+						WHERE n.t_id = NEW.t_id AND n.duration = duration1;
+
+						UPDATE notifications n
+						SET 
+							scheduled_at = DATE_SUB(NEW.deadline, INTERVAL duration2 MINUTE),
+							status = CASE
+								WHEN TIMESTAMPDIFF(MINUTE, NOW(), NEW.deadline) < duration2 THEN 'sent'
+								ELSE 'pending'
+							END
+						WHERE n.t_id = NEW.t_id AND n.duration = duration2;
+
+						UPDATE notifications n
+						SET 
+							scheduled_at = DATE_SUB(NEW.deadline, INTERVAL duration3 MINUTE),
+							status = CASE
+								WHEN TIMESTAMPDIFF(MINUTE, NOW(), NEW.deadline) < duration3 THEN 'sent'
+								ELSE 'pending'
+							END
+						WHERE n.t_id = NEW.t_id AND n.duration = duration3;
+					END IF;
+				END;`,
+
+		`CREATE TRIGGER IF NOT EXISTS after_subscription_insert
+			AFTER INSERT ON subscriptions
+			FOR EACH ROW
+			BEGIN
+				DECLARE duration1 INT DEFAULT 10; 
+				DECLARE duration2 INT DEFAULT 60;
+				DECLARE duration3 INT DEFAULT 180; 
+
+				-- Insert 3 notifications for the new task
+				INSERT INTO notifications(t_id, s_id, duration, scheduled_at, title, message, status)
+				SELECT 
+					t.t_id, 
+					NEW.s_id, 
+					duration1, 
+					DATE_SUB(t.deadline, INTERVAL duration1 MINUTE), 
+					"Task reminder, Rush Hour", 
+					'Hurry up! You have 10 minutes to finish the task.',
+					CASE
+                        WHEN TIMESTAMPDIFF(MINUTE, NOW(), t.deadline) < duration1 THEN 'sent'
+                        ELSE 'pending'
+                    END
+				FROM task t
+				WHERE NEW.u_id = (SELECT w.u_id FROM workspace w WHERE w.w_id = t.w_id) AND NEW.active = TRUE;
+
+				INSERT INTO notifications(t_id, s_id, duration, scheduled_at, title, message, status)
+				SELECT 
+					t.t_id, 
+					NEW.s_id, 
+					duration2, 
+					DATE_SUB(t.deadline, INTERVAL duration2 MINUTE), 
+					"Task reminder, Rush Hour", 
+					'Hurry up! You have 10 minutes to finish the task.',
+					CASE
+                        WHEN TIMESTAMPDIFF(MINUTE, NOW(), t.deadline) < duration2 THEN 'sent'
+                        ELSE 'pending'
+                    END
+				FROM task t
+				WHERE NEW.u_id = (SELECT w.u_id FROM workspace w WHERE w.w_id = t.w_id) AND NEW.active = TRUE;
+
+				INSERT INTO notifications(t_id, s_id, duration, scheduled_at, title, message, status)
+				SELECT 
+					t.t_id, 
+					NEW.s_id, 
+					duration3, 
+					DATE_SUB(t.deadline, INTERVAL duration3 MINUTE), 
+					"Task reminder, Rush Hour", 
+					'Hurry up! You have 10 minutes to finish the task.',
+					CASE
+                        WHEN TIMESTAMPDIFF(MINUTE, NOW(), t.deadline) < duration3 THEN 'sent'
+                        ELSE 'pending'
+                    END
+				FROM task t
+				WHERE NEW.u_id = (SELECT w.u_id FROM workspace w WHERE w.w_id = t.w_id) AND NEW.active = TRUE;
+			END;`,
 	}
 
 	for _, table := range tables {
