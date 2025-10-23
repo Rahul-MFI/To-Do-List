@@ -44,7 +44,7 @@ func sendNotifications(db *sql.DB, vapidPublicKey, vapidPrivateKey string) {
 	INNER JOIN task t ON n.t_id = t.t_id
 	INNER JOIN subscriptions s ON n.s_id = s.s_id
 	WHERE n.status = 'pending'
-	  AND n.scheduled_at <= NOW()
+	  AND (n.scheduled_at <= NOW() OR ABS(TIMESTAMPDIFF(MINUTE, NOW(), n.scheduled_at)) < 5)
 	  AND t.markCompleted = 0
 	  AND s.active = 1;
 	`
