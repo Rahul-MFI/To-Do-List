@@ -88,7 +88,9 @@ func sendNotifications(db *sql.DB, vapidPublicKey, vapidPrivateKey string) {
 		})
 		status := "sent"
 		if err != nil {
-			log.Fatal("Error sending push:", err)
+			log.Printf("❌ Error sending push: %v\n", err)
+			updateNotificationStatus(db, n.NotificationID, "failed")
+			continue
 		}
 		defer resp.Body.Close()
 
@@ -106,10 +108,13 @@ func sendNotifications(db *sql.DB, vapidPublicKey, vapidPrivateKey string) {
 			status = "sent"
 			log.Printf("✅ Notification sent successfully for task %d\n", n.TaskID)
 		}
-		_, err = db.Exec(`UPDATE notifications SET status = ?, sent_at = NOW() WHERE n_id = ?`, status, n.NotificationID)
-		if err != nil {
-			log.Printf("❌ Failed to update notification %d: %v\n", n.NotificationID, err)
-		}
+		updateNotificationStatus(db, n.NotificationID, status)
+	}
+}
+
+func updateNotificationStatus(db *sql.DB, notificationID int, status string) {
+	if _, err := db.Exec(`UPDATE notifications SET status = ?, sent_at = NOW() WHERE n_id = ?`, status, notificationID); err != nil {
+		log.Printf("❌ Failed to update notification %d: %v\n", notificationID, err)
 	}
 }
 
@@ -135,7 +140,7 @@ func main() {
 	// Start cron scheduler
 	c := cron.New()
 	// Run every 1 minute (or use @every 10s for testing)
-	c.AddFunc("@every 60s", func() {
+	c.AddFunc("@every 10s", func() {
 		log.Println("⏰ Running scheduled push job...")
 		sendNotifications(db, vapidPublicKey, vapidPrivateKey)
 	})

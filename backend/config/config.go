@@ -253,7 +253,7 @@ func ConnectDatabase() error {
 		Password: utils.GetEnv().DB_PASS,
 		Database: utils.GetEnv().DB_NAME,
 	}
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&charset=utf8mb4",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?tls=true&parseTime=true&charset=utf8mb4",
 		cfg.Username,
 		cfg.Password,
 		cfg.Host,
