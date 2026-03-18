@@ -4,43 +4,42 @@ import (
 	"ToDo/config"
 	"ToDo/routes"
 	"ToDo/utils"
+	"log"
 	"net/http"
-	"sync"
 
 	"github.com/gin-gonic/gin"
 )
 
 var (
-	app  *gin.Engine
-	once sync.Once
+	app     *gin.Engine
+	initErr error
 )
 
 func init() {
-	once.Do(func() {
-		// Load env and setup
-		utils.LoadEnv(".env")
-		_ = utils.GetEnv()
+	utils.LoadEnv(".env")
+	_ = utils.GetEnv()
 
-		// Connect to TiDB database
-		config.ConnectDatabase()
+	if err := config.ConnectDatabase(); err != nil {
+		log.Println("Warning: failed to connect to database:", err)
+		initErr = err
+		return
+	}
 
-		// Initialize tables
-		err := config.Db.InitializeTables()
-		if err != nil {
-			panic(err)
-		}
+	if err := config.Db.InitializeTables(); err != nil {
+		log.Println("Warning: failed to initialize tables:", err)
+	}
 
-		// Setup Gin router
-		app = routes.SetupRouter()
-
-		// Root route
-		app.GET("/", func(c *gin.Context) {
-			c.String(200, "Helo Rocky")
-		})
+	app = routes.SetupRouter()
+	app.GET("/", func(c *gin.Context) {
+		c.String(200, "Helo Rocky")
 	})
 }
 
 // Handler is the single entry point Vercel calls
 func Handler(w http.ResponseWriter, r *http.Request) {
+	if initErr != nil || app == nil {
+		http.Error(w, "Service unavailable: database connection failed", http.StatusServiceUnavailable)
+		return
+	}
 	app.ServeHTTP(w, r)
 }
