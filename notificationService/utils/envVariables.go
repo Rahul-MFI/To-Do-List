@@ -13,8 +13,11 @@ var env *model.Env
 // LoadEnv loads env vars from a given file, falling back to OS env vars if file is missing
 func LoadEnv(file string) {
 	env = &model.Env{}
-	if err := godotenv.Load(file); err != nil {
-		log.Printf("No %s file found, reading env vars from environment", file)
+	if _, err := os.Stat(".env"); err == nil {
+		err := godotenv.Load(".env")
+		if err != nil {
+			log.Println("Warning: Failed to load .env file:", err)
+		}
 	}
 	env.DB_HOST = os.Getenv("DB_HOST")
 	env.DB_PORT = os.Getenv("DB_PORT")
