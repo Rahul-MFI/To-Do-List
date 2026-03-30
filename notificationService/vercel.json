@@ -1,8 +1,14 @@
 {
-  "crons": [
+  "builds": [
     {
-      "path": "/api/notify",
-      "schedule": "* * * * *"
+      "src": "api/index.go",
+      "use": "@vercel/go"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/api/index.go"
     }
   ]
 }
