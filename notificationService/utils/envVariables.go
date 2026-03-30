@@ -10,12 +10,11 @@ import (
 
 var env *model.Env
 
-// LoadEnv loads env vars from a given file
+// LoadEnv loads env vars from a given file, falling back to OS env vars if file is missing
 func LoadEnv(file string) {
 	env = &model.Env{}
-	err := godotenv.Load(file)
-	if err != nil {
-		log.Fatalf("Error loading %s file: %v", file, err)
+	if err := godotenv.Load(file); err != nil {
+		log.Printf("No %s file found, reading env vars from environment", file)
 	}
 	env.DB_HOST = os.Getenv("DB_HOST")
 	env.DB_PORT = os.Getenv("DB_PORT")
@@ -26,6 +25,7 @@ func LoadEnv(file string) {
 	env.JWT_EXPIRATION = os.Getenv("JWT_EXPIRATION")
 	env.VAPID_PUBLIC_KEY = os.Getenv("VAPID_PUBLIC_KEY")
 	env.VAPID_PRIVATE_KEY = os.Getenv("VAPID_PRIVATE_KEY")
+	env.VAPID_SUBSCRIBER = os.Getenv("VAPID_SUBSCRIBER")
 
 }
 

@@ -3,7 +3,7 @@ module notificationService
 go 1.24.5
 
 require (
-	github.com/SherClockHolmes/webpush-go v1.2.0
+	github.com/SherClockHolmes/webpush-go v1.4.0
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.10.1
 	github.com/go-sql-driver/mysql v1.9.3

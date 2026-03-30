@@ -10,5 +10,6 @@ type Env struct {
 	JWT_SECRET        string
 	JWT_EXPIRATION    string
 	VAPID_PUBLIC_KEY  string
-	VAPID_PRIVATE_KEY string
+	VAPID_PRIVATE_KEY  string
+	VAPID_SUBSCRIBER   string
 }

@@ -1,9 +1,8 @@
-package main
+package handler
 
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -13,7 +12,7 @@ import (
 	"notificationService/utils"
 
 	"github.com/SherClockHolmes/webpush-go"
-	"github.com/robfig/cron/v3"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type NotificationRow struct {
@@ -32,13 +31,26 @@ type NotificationRow struct {
 	ScheduledAt    time.Time `db:"scheduled_at"`
 }
 
-type PushResponse struct {
-	Message  string `json:"message"`
-	Response string `json:"response"`
-	Status   string `json:"status"`
+// Handler is the Vercel serverless function entry point.
+// Vercel cron calls GET /api/notify on the configured schedule.
+func Handler(w http.ResponseWriter, r *http.Request) {
+	utils.LoadEnv(".env")
+	env := utils.GetEnv()
+
+	if err := config.ConnectDatabase(); err != nil {
+		log.Println("❌ DB connection error:", err)
+		http.Error(w, "DB connection failed", http.StatusInternalServerError)
+		return
+	}
+	defer config.Db.Close()
+
+	sendNotifications(config.Db.Conn, env.VAPID_PUBLIC_KEY, env.VAPID_PRIVATE_KEY, env.VAPID_SUBSCRIBER)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"status":"ok"}`))
 }
 
-// sendNotifications fetches pending notifications and sends them via Web Push
 func sendNotifications(db *sql.DB, vapidPublicKey, vapidPrivateKey, vapidSubscriber string) {
 	query := `
 	SELECT n.n_id, n.t_id, t.markCompleted, n.s_id, n.duration, s.endpoint, s.p256dh, s.auth, s.active, n.title, n.message, n.status, n.scheduled_at
@@ -46,7 +58,7 @@ func sendNotifications(db *sql.DB, vapidPublicKey, vapidPrivateKey, vapidSubscri
 	INNER JOIN task t ON n.t_id = t.t_id
 	INNER JOIN subscriptions s ON n.s_id = s.s_id
 	WHERE n.status = 'pending'
-	  AND (n.scheduled_at <= NOW() OR ABS(TIMESTAMPDIFF(MINUTE, NOW(), n.scheduled_at)) < 1)
+	  AND (n.scheduled_at <= NOW() OR ABS(TIMESTAMPDIFF(MINUTE, NOW(), n.scheduled_at)) < 5)
 	  AND t.markCompleted = 0
 	  AND s.active = 1;
 	`
@@ -65,7 +77,6 @@ func sendNotifications(db *sql.DB, vapidPublicKey, vapidPrivateKey, vapidSubscri
 			continue
 		}
 
-		// Build Web Push payload
 		payload := map[string]interface{}{
 			"title": n.Title,
 			"body":  n.Message,
@@ -75,7 +86,6 @@ func sendNotifications(db *sql.DB, vapidPublicKey, vapidPrivateKey, vapidSubscri
 		}
 		payloadJSON, _ := json.Marshal(payload)
 
-		// Send push notification
 		resp, err := webpush.SendNotification(payloadJSON, &webpush.Subscription{
 			Endpoint: n.Endpoint,
 			Keys: webpush.Keys{
@@ -88,6 +98,7 @@ func sendNotifications(db *sql.DB, vapidPublicKey, vapidPrivateKey, vapidSubscri
 			VAPIDPrivateKey: vapidPrivateKey,
 			TTL:             30,
 		})
+
 		status := "sent"
 		if err != nil {
 			log.Printf("❌ Error sending push to endpoint %s: %v\n", n.Endpoint, err)
@@ -121,34 +132,7 @@ func updateNotificationStatus(db *sql.DB, notificationID int, status string) {
 }
 
 func deleteSubscription(db *sql.DB, subscriptionID int) {
-	_, err := db.Exec("DELETE FROM subscriptions WHERE s_id = ?", subscriptionID)
-	if err != nil {
+	if _, err := db.Exec("DELETE FROM subscriptions WHERE s_id = ?", subscriptionID); err != nil {
 		log.Printf("❌ Failed to delete subscription %d: %v\n", subscriptionID, err)
 	}
-}
-
-func main() {
-	// Load env variables
-	utils.LoadEnv(".env")
-	env := utils.GetEnv()
-
-	// Connect to DB
-	config.ConnectDatabase()
-	db := config.Db.Conn
-
-	vapidPublicKey := env.VAPID_PUBLIC_KEY
-	vapidPrivateKey := env.VAPID_PRIVATE_KEY
-	vapidSubscriber := env.VAPID_SUBSCRIBER
-
-	// Start cron scheduler
-	c := cron.New()
-	// Run every 1 minute (or use @every 10s for testing)
-	c.AddFunc("@every 10s", func() {
-		log.Println("⏰ Running scheduled push job...")
-		sendNotifications(db, vapidPublicKey, vapidPrivateKey, vapidSubscriber)
-	})
-	c.Start()
-
-	fmt.Println("🚀 Cron scheduler started, sending notifications every 1 minute")
-	select {} // Block forever
 }
