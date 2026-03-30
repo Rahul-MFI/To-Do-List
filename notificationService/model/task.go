@@ -29,3 +29,19 @@ type Workspace struct {
 	Name   string `json:"w_name" db:"w_name"`
 	UserID int    `json:"u_id" db:"u_id"`
 }
+
+type NotificationRow struct {
+	NotificationID int       `db:"n_id"`
+	TaskID         int       `db:"t_id"`
+	MarkCompleted  bool      `db:"markCompleted"`
+	SubscriptionID int       `db:"s_id"`
+	Duration       int       `db:"duration"`
+	Endpoint       string    `db:"endpoint"`
+	P256dh         string    `db:"p256dh"`
+	Auth           string    `db:"auth"`
+	Active         bool      `db:"active"`
+	Title          string    `db:"title"`
+	Message        string    `db:"message"`
+	Status         string    `db:"status"`
+	ScheduledAt    time.Time `db:"scheduled_at"`
+}
