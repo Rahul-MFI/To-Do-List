@@ -3,17 +3,16 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"time"
 
 	"notificationService/config"
+	"notificationService/routes"
 	"notificationService/utils"
 
 	"github.com/SherClockHolmes/webpush-go"
-	"github.com/robfig/cron/v3"
 )
 
 type NotificationRow struct {
@@ -46,7 +45,7 @@ func sendNotifications(db *sql.DB, vapidPublicKey, vapidPrivateKey, vapidSubscri
 	INNER JOIN task t ON n.t_id = t.t_id
 	INNER JOIN subscriptions s ON n.s_id = s.s_id
 	WHERE n.status = 'pending'
-	  AND (n.scheduled_at <= NOW() OR ABS(TIMESTAMPDIFF(MINUTE, NOW(), n.scheduled_at)) < 1)
+	  AND (n.scheduled_at <= UTC_TIMESTAMP() OR ABS(TIMESTAMPDIFF(MINUTE, UTC_TIMESTAMP(), n.scheduled_at)) < 1)
 	  AND t.markCompleted = 0
 	  AND s.active = 1;
 	`
@@ -115,7 +114,7 @@ func sendNotifications(db *sql.DB, vapidPublicKey, vapidPrivateKey, vapidSubscri
 }
 
 func updateNotificationStatus(db *sql.DB, notificationID int, status string) {
-	if _, err := db.Exec(`UPDATE notifications SET status = ?, sent_at = NOW() WHERE n_id = ?`, status, notificationID); err != nil {
+	if _, err := db.Exec(`UPDATE notifications SET status = ?, sent_at = UTC_TIMESTAMP() WHERE n_id = ?`, status, notificationID); err != nil {
 		log.Printf("❌ Failed to update notification %d: %v\n", notificationID, err)
 	}
 }
@@ -130,25 +129,26 @@ func deleteSubscription(db *sql.DB, subscriptionID int) {
 func main() {
 	// Load env variables
 	utils.LoadEnv(".env")
-	env := utils.GetEnv()
+	_ = utils.GetEnv()
 
 	// Connect to DB
 	config.ConnectDatabase()
-	db := config.Db.Conn
-
-	vapidPublicKey := env.VAPID_PUBLIC_KEY
-	vapidPrivateKey := env.VAPID_PRIVATE_KEY
-	vapidSubscriber := env.VAPID_SUBSCRIBER
 
 	// Start cron scheduler
-	c := cron.New()
-	// Run every 1 minute (or use @every 10s for testing)
-	c.AddFunc("@every 10s", func() {
-		log.Println("⏰ Running scheduled push job...")
-		sendNotifications(db, vapidPublicKey, vapidPrivateKey, vapidSubscriber)
-	})
-	c.Start()
+	// c := cron.New()
+	// // Run every 1 minute (or use @every 10s for testing)
+	// c.AddFunc("@every 10s", func() {
+	// 	log.Println("⏰ Running scheduled push job...")
+	// 	sendNotifications(db, vapidPublicKey, vapidPrivateKey, vapidSubscriber)
+	// })
+	// c.Start()
 
-	fmt.Println("🚀 Cron scheduler started, sending notifications every 1 minute")
-	select {} // Block forever
+	// fmt.Println("🚀 Cron scheduler started, sending notifications every 1 minute")
+	// select {} // Block forever
+
+	r := routes.SetupRouter()
+
+	if err := r.Run(":8080"); err != nil {
+		log.Fatal(err)
+	}
 }

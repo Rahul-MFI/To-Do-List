@@ -33,7 +33,7 @@ func sendNotifications(db *sql.DB, vapidPublicKey, vapidPrivateKey, vapidSubscri
 	INNER JOIN task t ON n.t_id = t.t_id
 	INNER JOIN subscriptions s ON n.s_id = s.s_id
 	WHERE n.status = 'pending'
-	  AND (n.scheduled_at <= NOW() OR ABS(TIMESTAMPDIFF(MINUTE, NOW(), n.scheduled_at)) < 5)
+	  AND (n.scheduled_at <= UTC_TIMESTAMP() OR ABS(TIMESTAMPDIFF(MINUTE, UTC_TIMESTAMP(), n.scheduled_at)) < 1)
 	  AND t.markCompleted = 0
 	  AND s.active = 1;
 	`
@@ -101,7 +101,7 @@ func sendNotifications(db *sql.DB, vapidPublicKey, vapidPrivateKey, vapidSubscri
 }
 
 func updateNotificationStatus(db *sql.DB, notificationID int, status string) {
-	if _, err := db.Exec(`UPDATE notifications SET status = ?, sent_at = NOW() WHERE n_id = ?`, status, notificationID); err != nil {
+	if _, err := db.Exec(`UPDATE notifications SET status = ?, sent_at = UTC_TIMESTAMP() WHERE n_id = ?`, status, notificationID); err != nil {
 		log.Printf("❌ Failed to update notification %d: %v\n", notificationID, err)
 	}
 }

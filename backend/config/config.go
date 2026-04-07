@@ -102,7 +102,7 @@ func (db *DB) InitializeTables() error {
 					"Task reminder, Rush Hour", 
 					'Hurry up! You have 10 minutes to finish the task.',
 					CASE
-                        WHEN TIMESTAMPDIFF(MINUTE, NOW(), NEW.deadline) < duration1 THEN 'sent'
+                        WHEN TIMESTAMPDIFF(MINUTE, UTC_TIMESTAMP() , NEW.deadline) < duration1 THEN 'sent'
                         ELSE 'pending'
                     END
 				FROM subscriptions s
@@ -117,7 +117,7 @@ func (db *DB) InitializeTables() error {
 					"Task reminder, Perfect Time", 
 					'Great! You have 1 hour to finish the task.',
 					CASE
-                        WHEN TIMESTAMPDIFF(MINUTE, NOW(), NEW.deadline) < duration2 THEN 'sent'
+                        WHEN TIMESTAMPDIFF(MINUTE, UTC_TIMESTAMP(), NEW.deadline) < duration2 THEN 'sent'
                         ELSE 'pending'
                     END
 				FROM subscriptions s
@@ -132,7 +132,7 @@ func (db *DB) InitializeTables() error {
 					"Task reminder, Chill", 
 					'Reminder! You have 3 hours to finish the task.',
 					CASE
-                        WHEN TIMESTAMPDIFF(MINUTE, NOW(), NEW.deadline) < duration3 THEN 'sent'
+                        WHEN TIMESTAMPDIFF(MINUTE, UTC_TIMESTAMP() , NEW.deadline) < duration3 THEN 'sent'
                         ELSE 'pending'
                     END
 				FROM subscriptions s
@@ -152,7 +152,7 @@ func (db *DB) InitializeTables() error {
 						SET 
 							scheduled_at = DATE_SUB(NEW.deadline, INTERVAL duration1 MINUTE),
 							status = CASE
-								WHEN TIMESTAMPDIFF(MINUTE, NOW(), NEW.deadline) < duration1 THEN 'sent'
+								WHEN TIMESTAMPDIFF(MINUTE, UTC_TIMESTAMP(), NEW.deadline) < duration1 THEN 'sent'
 								ELSE 'pending'
 							END
 						WHERE n.t_id = NEW.t_id AND n.duration = duration1;
@@ -161,7 +161,7 @@ func (db *DB) InitializeTables() error {
 						SET 
 							scheduled_at = DATE_SUB(NEW.deadline, INTERVAL duration2 MINUTE),
 							status = CASE
-								WHEN TIMESTAMPDIFF(MINUTE, NOW(), NEW.deadline) < duration2 THEN 'sent'
+								WHEN TIMESTAMPDIFF(MINUTE, UTC_TIMESTAMP(), NEW.deadline) < duration2 THEN 'sent'
 								ELSE 'pending'
 							END
 						WHERE n.t_id = NEW.t_id AND n.duration = duration2;
@@ -170,7 +170,7 @@ func (db *DB) InitializeTables() error {
 						SET 
 							scheduled_at = DATE_SUB(NEW.deadline, INTERVAL duration3 MINUTE),
 							status = CASE
-								WHEN TIMESTAMPDIFF(MINUTE, NOW(), NEW.deadline) < duration3 THEN 'sent'
+								WHEN TIMESTAMPDIFF(MINUTE, UTC_TIMESTAMP(), NEW.deadline) < duration3 THEN 'sent'
 								ELSE 'pending'
 							END
 						WHERE n.t_id = NEW.t_id AND n.duration = duration3;
@@ -195,7 +195,7 @@ func (db *DB) InitializeTables() error {
 					"Task reminder, Rush Hour", 
 					'Hurry up! You have 10 minutes to finish the task.',
 					CASE
-                        WHEN TIMESTAMPDIFF(MINUTE, NOW(), t.deadline) < duration1 THEN 'sent'
+                        WHEN TIMESTAMPDIFF(MINUTE, UTC_TIMESTAMP(), t.deadline) < duration1 THEN 'sent'
                         ELSE 'pending'
                     END
 				FROM task t
@@ -210,7 +210,7 @@ func (db *DB) InitializeTables() error {
 					"Task reminder, Rush Hour", 
 					'Hurry up! You have 10 minutes to finish the task.',
 					CASE
-                        WHEN TIMESTAMPDIFF(MINUTE, NOW(), t.deadline) < duration2 THEN 'sent'
+                        WHEN TIMESTAMPDIFF(MINUTE, UTC_TIMESTAMP(), t.deadline) < duration2 THEN 'sent'
                         ELSE 'pending'
                     END
 				FROM task t
@@ -225,7 +225,7 @@ func (db *DB) InitializeTables() error {
 					"Task reminder, Rush Hour", 
 					'Hurry up! You have 10 minutes to finish the task.',
 					CASE
-                        WHEN TIMESTAMPDIFF(MINUTE, NOW(), t.deadline) < duration3 THEN 'sent'
+                        WHEN TIMESTAMPDIFF(MINUTE, UTC_TIMESTAMP(), t.deadline) < duration3 THEN 'sent'
                         ELSE 'pending'
                     END
 				FROM task t
@@ -253,7 +253,7 @@ func ConnectDatabase() error {
 		Password: utils.GetEnv().DB_PASS,
 		Database: utils.GetEnv().DB_NAME,
 	}
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?tls=true&parseTime=true&charset=utf8mb4",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?tls=skip-verify&parseTime=true&charset=utf8mb4",
 		cfg.Username,
 		cfg.Password,
 		cfg.Host,
