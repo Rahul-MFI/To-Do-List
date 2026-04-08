@@ -75,7 +75,7 @@ func (db *DB) InitializeTables() error {
 			s_id INT NOT NULL,
 			duration INT NOT NULL,
 			sent_at DATETIME DEFAULT NULL,
-			status ENUM("sent", "failed", "pending") DEFAULT "pending",
+			status ENUM('sent', 'failed', 'pending') DEFAULT 'pending',
 			scheduled_at DATETIME NOT NULL,
 			title VARCHAR(255) NOT NULL,
 			message VARCHAR(255) NOT NULL,
@@ -99,7 +99,7 @@ func (db *DB) InitializeTables() error {
 					s.s_id, 
 					duration1, 
 					DATE_SUB(NEW.deadline, INTERVAL duration1 MINUTE), 
-					"Task reminder, Rush Hour", 
+					'Task reminder, Rush Hour', 
 					'Hurry up! You have 10 minutes to finish the task.',
 					CASE
                         WHEN TIMESTAMPDIFF(MINUTE, UTC_TIMESTAMP() , NEW.deadline) < duration1 THEN 'sent'
@@ -114,7 +114,7 @@ func (db *DB) InitializeTables() error {
 					s.s_id, 
 					duration2, 
 					DATE_SUB(NEW.deadline, INTERVAL duration2 MINUTE), 
-					"Task reminder, Perfect Time", 
+					'Task reminder, Perfect Time', 
 					'Great! You have 1 hour to finish the task.',
 					CASE
                         WHEN TIMESTAMPDIFF(MINUTE, UTC_TIMESTAMP(), NEW.deadline) < duration2 THEN 'sent'
@@ -129,7 +129,7 @@ func (db *DB) InitializeTables() error {
 					s.s_id, 
 					duration3, 
 					DATE_SUB(NEW.deadline, INTERVAL duration3 MINUTE), 
-					"Task reminder, Chill", 
+					'Task reminder, Chill', 
 					'Reminder! You have 3 hours to finish the task.',
 					CASE
                         WHEN TIMESTAMPDIFF(MINUTE, UTC_TIMESTAMP() , NEW.deadline) < duration3 THEN 'sent'
@@ -192,7 +192,7 @@ func (db *DB) InitializeTables() error {
 					NEW.s_id, 
 					duration1, 
 					DATE_SUB(t.deadline, INTERVAL duration1 MINUTE), 
-					"Task reminder, Rush Hour", 
+					'Task reminder, Rush Hour', 
 					'Hurry up! You have 10 minutes to finish the task.',
 					CASE
                         WHEN TIMESTAMPDIFF(MINUTE, UTC_TIMESTAMP(), t.deadline) < duration1 THEN 'sent'
@@ -207,7 +207,7 @@ func (db *DB) InitializeTables() error {
 					NEW.s_id, 
 					duration2, 
 					DATE_SUB(t.deadline, INTERVAL duration2 MINUTE), 
-					"Task reminder, Rush Hour", 
+					'Task reminder, Rush Hour', 
 					'Hurry up! You have 10 minutes to finish the task.',
 					CASE
                         WHEN TIMESTAMPDIFF(MINUTE, UTC_TIMESTAMP(), t.deadline) < duration2 THEN 'sent'
@@ -222,7 +222,7 @@ func (db *DB) InitializeTables() error {
 					NEW.s_id, 
 					duration3, 
 					DATE_SUB(t.deadline, INTERVAL duration3 MINUTE), 
-					"Task reminder, Rush Hour", 
+					'Task reminder, Rush Hour', 
 					'Hurry up! You have 10 minutes to finish the task.',
 					CASE
                         WHEN TIMESTAMPDIFF(MINUTE, UTC_TIMESTAMP(), t.deadline) < duration3 THEN 'sent'
