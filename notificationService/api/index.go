@@ -32,16 +32,21 @@ func init() {
 	})
 }
 
-func setCORSHeaders(w http.ResponseWriter) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+func setCORSHeaders(w http.ResponseWriter, r *http.Request) {
+	origin := r.Header.Get("Origin")
+	if origin == "" {
+		origin = "*"
+	}
+	w.Header().Set("Access-Control-Allow-Origin", origin)
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
 	w.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Authorization")
 	w.Header().Set("Access-Control-Expose-Headers", "Content-Length")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
 }
 
 // Handler is the single entry point Vercel calls
 func Handler(w http.ResponseWriter, r *http.Request) {
-	setCORSHeaders(w)
+	setCORSHeaders(w, r)
 
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
